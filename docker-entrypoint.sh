@@ -19,17 +19,17 @@ echo ""
 # --- Phase 2: Benchmarks (Performance) ---
 echo ">>> Phase 2: Running benchmarks..."
 echo "    Policies: LRU, FIFO, LFU, W-TinyLFU, W-TinyLFU+Cost"
-echo "    Cache sizes: 10, 20, 50, 100, 200"
+echo "    Cache sizes: 50, 100, 200"
 echo "    Dataset: synthetic (Zipfian workload, vocab=500, variable response costs)"
 echo ""
 python -u benchmarks/run_benchmarks.py \
     --dataset synthetic \
     --n_samples 3000 \
-    --cache_sizes 10,20,50,100,200 \
+    --cache_sizes 50,100,200 \
     --policies lru,fifo,lfu,wtinylfu,wtinylfu_nocost \
     --thresholds 0.85 \
     --output results/ \
-    --workers -1
+    --workers 0
 echo ""
 
 # --- Phase 3: Ablation Study ---

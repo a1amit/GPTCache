@@ -12,7 +12,9 @@ cd GPTCache
 git checkout feature/wtinylfu-cost-aware
 ```
 
-### Option A: Docker (recommended -- no setup required)
+> **⚠️ RECOMMENDED: Run benchmarks locally with `--workers -1` (all CPU cores). This takes ~5 minutes. Docker runs sequentially inside the container and can take 40+ minutes. Use Docker only for reproducibility verification, not for day-to-day benchmarking.**
+
+### Option A: Docker (no setup required)
 
 Build once, then run the full evaluation (tests + benchmarks + ablation + figures) in a single command:
 
@@ -39,10 +41,12 @@ docker run --rm -v "${PWD}\results:/app/results" -v "${PWD}\results_ablation:/ap
 
 **Important:** Without the `-v` volume mounts, all output stays inside the container and is lost when it exits.
 
+**Performance note:** The Docker container runs benchmarks sequentially (`--workers 0`) to avoid process-pool deadlocks in constrained container environments. If you need faster runs, either allocate more CPU/memory to Docker Desktop (Settings → Resources) or use the local installation (Option B) with `--workers -1`.
+
 The container executes four phases:
 1. **Unit tests** (38 tests) -- proves correctness
-2. **Benchmarks** (LRU, FIFO, LFU, W-TinyLFU, W-TinyLFU+Cost at cache sizes 10/20/50/100/200) -- proves performance gain, runs in parallel using all available cores
-3. **Ablation study** -- workload profiles, component ablation, window size sweep
+2. **Benchmarks** (LRU, FIFO, LFU, W-TinyLFU, W-TinyLFU+Cost at cache sizes 50/100/200) -- proves performance gain
+3. **Ablation study** -- workload profiles, component ablation, window size + cache size sweep
 4. **Visualization** -- generates comparison plots and improvement-vs-LRU analysis
 
 After the run completes, the following files will be available on your host:

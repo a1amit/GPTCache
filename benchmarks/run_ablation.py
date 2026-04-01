@@ -157,13 +157,15 @@ def main():
     for cache_sz in [10, 20, 50, 100, 200]:
         for policy in ["lru", "wtinylfu"]:
             print(f"  cache_size={cache_sz}, {policy}...", end=" ", flush=True)
-            r = run_experiment(
+            r, shared_encoder = run_experiment(
                 name=f"sweep_cachesize_{cache_sz}",
                 entries=entries,
                 cache_size=cache_sz,
                 policy=policy,
                 threshold=0.85,
                 dataset_name="sweep_cachesize",
+                precomputed_embeddings=embeddings,
+                shared_encoder=shared_encoder,
             )
             r["sweep_cache_size"] = cache_sz
             print(f"hit_rate={r['hit_rate']:.4f} token_save={r['token_saving_ratio']:.4f}")
