@@ -88,14 +88,8 @@ pip install -e .
 
 Run a fast benchmark using a generated Zipfian workload -- no dataset downloads required:
 
-```bash
-python benchmarks/run_benchmarks.py \
-    --dataset synthetic \
-    --n_samples 500 \
-    --cache_sizes 50 \
-    --policies lru,wtinylfu \
-    --output results/ \
-    --workers -1
+```
+python benchmarks/run_benchmarks.py --dataset synthetic --n_samples 500 --cache_sizes 50 --policies "lru,wtinylfu" --output results/ --workers -1
 ```
 
 This will replay 500 synthetic queries against each policy and print a comparison table to the console. Results are saved as JSON files in the `results/` directory.
@@ -106,42 +100,25 @@ For realistic evaluation, use conversation datasets from HuggingFace. These requ
 
 **LMSYS-Chat-1M** (requires HuggingFace token + license acceptance):
 
-```bash
-export HF_TOKEN="hf_your_token"  # or $env:HF_TOKEN on PowerShell
-python benchmarks/run_benchmarks.py \
-    --dataset lmsys \
-    --n_samples 3000 \
-    --cache_sizes 20,50,100 \
-    --policies lru,fifo,lfu,wtinylfu,wtinylfu_nocost \
-    --thresholds 0.85 \
-    --output results_lmsys/ \
-    --workers -1
+```
+# Bash
+export HF_TOKEN="hf_your_token"
+# PowerShell
+$env:HF_TOKEN = "hf_your_token"
+
+python benchmarks/run_benchmarks.py --dataset lmsys --n_samples 3000 --cache_sizes "20,50,100" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_lmsys/ --workers -1
 ```
 
 **WildChat-1M:**
 
-```bash
-python benchmarks/run_benchmarks.py \
-    --dataset wildchat \
-    --n_samples 3000 \
-    --cache_sizes 20,50,100 \
-    --policies lru,fifo,lfu,wtinylfu,wtinylfu_nocost \
-    --thresholds 0.85 \
-    --output results_wildchat/ \
-    --workers -1
+```
+python benchmarks/run_benchmarks.py --dataset wildchat --n_samples 3000 --cache_sizes "20,50,100" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_wildchat/ --workers -1
 ```
 
 **Synthetic** (no downloads required):
 
-```bash
-python benchmarks/run_benchmarks.py \
-    --dataset synthetic \
-    --n_samples 3000 \
-    --cache_sizes 10,20,50 \
-    --policies lru,fifo,lfu,wtinylfu,wtinylfu_nocost \
-    --thresholds 0.85 \
-    --output results/ \
-    --workers -1
+```
+python benchmarks/run_benchmarks.py --dataset synthetic --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results/ --workers -1
 ```
 
 ## Parallel Execution
