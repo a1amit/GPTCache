@@ -14,14 +14,46 @@ git checkout feature/wtinylfu-cost-aware
 
 ### Option A: Docker (recommended -- no setup required)
 
+Build once, then run the full evaluation (tests + benchmarks + ablation + figures) in a single command:
+
 ```bash
 docker build -t gptcache-bench .
+
+# Quick run (output stays inside container)
 docker run --rm gptcache-bench
+
+# Save JSON results, ablation data, and figures to your host machine
+# Linux / macOS / Git Bash
+docker run --rm \
+    -v "$(pwd)/results:/app/results" \
+    -v "$(pwd)/results_ablation:/app/results_ablation" \
+    -v "$(pwd)/figures:/app/figures" \
+    gptcache-bench
+
+# Windows CMD
+docker run --rm -v "%cd%\results:/app/results" -v "%cd%\results_ablation:/app/results_ablation" -v "%cd%\figures:/app/figures" gptcache-bench
+
+# Windows PowerShell
+docker run --rm -v "${PWD}\results:/app/results" -v "${PWD}\results_ablation:/app/results_ablation" -v "${PWD}\figures:/app/figures" gptcache-bench
 ```
 
-This runs unit tests, benchmarks, ablation study, and visualization in one command. See [Docker Usage](#docker-usage-recommended-for-reproducibility) for saving results to your host machine.
+**Important:** Without the `-v` volume mounts, all output stays inside the container and is lost when it exits.
 
-### Option B: Local environment
+The container executes four phases:
+1. **Unit tests** (38 tests) -- proves correctness
+2. **Benchmarks** (LRU, FIFO, LFU, W-TinyLFU, W-TinyLFU+Cost at cache sizes 10/20/50/100/200) -- proves performance gain, runs in parallel using all available cores
+3. **Ablation study** -- workload profiles, component ablation, window size sweep
+4. **Visualization** -- generates comparison plots and improvement-vs-LRU analysis
+
+After the run completes, the following files will be available on your host:
+
+| Directory | Contents |
+|-----------|----------|
+| `results/` | Per-policy JSON result files (`*_cs{size}_t{threshold}.json`) with hit rate, latency percentiles, token savings, throughput, and memory usage. Per-request logs (`*_log.json`) for CDF analysis. Combined `summary.json`. |
+| `results_ablation/` | `ablation_summary.json` with workload profile comparison, component ablation, and window size parameter sweep results. |
+| `figures/` | Publication-quality plots (PDF + PNG): hit rate, token savings, latency percentiles, improvement vs LRU, latency CDF, hit rate over time. Plain-text `summary_table.txt`. |
+
+### Option B: Local virtual environment
 
 ```bash
 # Create and activate a virtual environment (Python 3.13 recommended)
@@ -35,6 +67,35 @@ source .venv/bin/activate
 pip install -e .
 pip install -r requirements-bench.txt
 ```
+
+### Option C: Conda
+
+An `environment.yml` is provided for conda users with all dependencies pinned:
+
+```bash
+conda env create -f environment.yml
+conda activate gptcache-wtinylfu
+pip install -e .
+```
+
+## Running Tests
+
+```bash
+# Run all eviction policy unit tests (38 tests)
+python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" \
+    --ignore=tests/unit_tests/eviction/test_distributed_cache.py
+
+# Run only the W-TinyLFU tests (10 tests)
+python -m pytest tests/unit_tests/eviction/test_wtinylfu.py -v -o "addopts="
+
+# Run only the data structure tests (16 tests)
+python -m pytest tests/unit_tests/eviction/test_count_min_sketch.py \
+    tests/unit_tests/eviction/test_doorkeeper.py \
+    tests/unit_tests/eviction/test_segmented_lru.py -v -o "addopts="
+```
+
+Note: The `-o "addopts="` flag overrides GPTCache's `pytest.ini` which adds
+`--html` flags requiring an optional dependency we don't need.
 
 ## Quick Start (Synthetic Data)
 
@@ -148,73 +209,3 @@ These can be passed via `extra_params` in the simulator or directly to the `WTin
 | `cost_aware`           | `True`  | Enable cost-weighted eviction decisions (uses response token count)       |
 | `cms_width_multiplier` | `1`     | Count-Min Sketch width = next_power_of_2(maxsize * this multiplier)       |
 | `reset_multiplier`     | `10`    | CMS frequency counters reset every maxsize * this multiplier increments   |
-
-## Running Tests
-
-```bash
-# Run all eviction policy unit tests (38 tests)
-python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" \
-    --ignore=tests/unit_tests/eviction/test_distributed_cache.py
-
-# Run only the W-TinyLFU tests (10 tests)
-python -m pytest tests/unit_tests/eviction/test_wtinylfu.py -v -o "addopts="
-
-# Run only the data structure tests (16 tests)
-python -m pytest tests/unit_tests/eviction/test_count_min_sketch.py \
-    tests/unit_tests/eviction/test_doorkeeper.py \
-    tests/unit_tests/eviction/test_segmented_lru.py -v -o "addopts="
-```
-
-Note: The `-o "addopts="` flag overrides GPTCache's `pytest.ini` which adds
-`--html` flags requiring an optional dependency we don't need.
-
-## Docker Usage (Recommended for Reproducibility)
-
-One command runs everything — tests, benchmarks, and plot generation:
-
-```bash
-# Build the image
-docker build -t gptcache-bench .
-
-# Run full evaluation (tests + benchmarks + figures)
-docker run --rm gptcache-bench
-```
-
-This executes:
-1. **Unit tests** (38 tests) — proves correctness
-2. **Benchmarks** (LRU, FIFO, LFU, W-TinyLFU, W-TinyLFU+Cost at cache sizes 10/20/50/100/200) — proves performance gain, runs in parallel using all available cores
-3. **Ablation study** — workload profiles, component ablation, window size sweep
-4. **Visualization** — generates comparison plots and improvement-vs-LRU analysis
-
-**Important:** Without volume mounts, all output stays inside the container and is lost when it exits. To save the JSON results, ablation data, and figures to your host machine, mount the output directories:
-
-```bash
-# Linux / macOS / Git Bash
-docker run --rm \
-    -v "$(pwd)/results:/app/results" \
-    -v "$(pwd)/results_ablation:/app/results_ablation" \
-    -v "$(pwd)/figures:/app/figures" \
-    gptcache-bench
-
-# Windows CMD
-docker run --rm -v "%cd%\results:/app/results" -v "%cd%\results_ablation:/app/results_ablation" -v "%cd%\figures:/app/figures" gptcache-bench
-
-# Windows PowerShell
-docker run --rm -v "${PWD}\results:/app/results" -v "${PWD}\results_ablation:/app/results_ablation" -v "${PWD}\figures:/app/figures" gptcache-bench
-```
-
-After the run completes, the following files will be available on your host:
-
-| Directory | Contents |
-|-----------|----------|
-| `results/` | Per-policy JSON result files (`*_cs{size}_t{threshold}.json`) with hit rate, latency percentiles, token savings, throughput, and memory usage. Per-request logs (`*_log.json`) for CDF analysis. Combined `summary.json`. |
-| `results_ablation/` | `ablation_summary.json` with workload profile comparison, component ablation, and window size parameter sweep results. |
-| `figures/` | Publication-quality plots (PDF + PNG): hit rate, token savings, latency percentiles, improvement vs LRU, latency CDF, hit rate over time. Plain-text `summary_table.txt`. |
-
-## Conda
-
-```bash
-conda env create -f environment.yml
-conda activate gptcache-wtinylfu
-pip install -e .
-```
