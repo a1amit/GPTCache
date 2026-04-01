@@ -78,26 +78,9 @@ conda activate gptcache-wtinylfu
 pip install -e .
 ```
 
-## Running Tests
-
-```bash
-# Run all eviction policy unit tests (38 tests)
-python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" \
-    --ignore=tests/unit_tests/eviction/test_distributed_cache.py
-
-# Run only the W-TinyLFU tests (10 tests)
-python -m pytest tests/unit_tests/eviction/test_wtinylfu.py -v -o "addopts="
-
-# Run only the data structure tests (16 tests)
-python -m pytest tests/unit_tests/eviction/test_count_min_sketch.py \
-    tests/unit_tests/eviction/test_doorkeeper.py \
-    tests/unit_tests/eviction/test_segmented_lru.py -v -o "addopts="
-```
-
-Note: The `-o "addopts="` flag overrides GPTCache's `pytest.ini` which adds
-`--html` flags requiring an optional dependency we don't need.
-
 ## Quick Start (Synthetic Data)
+
+> **Docker users:** The container already runs tests, benchmarks, ablation, and visualization automatically. The sections below are for local (Option B/C) usage only.
 
 Run a fast benchmark using a generated Zipfian workload -- no dataset downloads required:
 
@@ -209,3 +192,24 @@ These can be passed via `extra_params` in the simulator or directly to the `WTin
 | `cost_aware`           | `True`  | Enable cost-weighted eviction decisions (uses response token count)       |
 | `cms_width_multiplier` | `1`     | Count-Min Sketch width = next_power_of_2(maxsize * this multiplier)       |
 | `reset_multiplier`     | `10`    | CMS frequency counters reset every maxsize * this multiplier increments   |
+
+## Running Tests Manually
+
+If you installed locally (Option B/C) and want to run just the unit tests without benchmarks:
+
+```bash
+# Run all eviction policy unit tests (38 tests)
+python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" \
+    --ignore=tests/unit_tests/eviction/test_distributed_cache.py
+
+# Run only the W-TinyLFU tests (10 tests)
+python -m pytest tests/unit_tests/eviction/test_wtinylfu.py -v -o "addopts="
+
+# Run only the data structure tests (16 tests)
+python -m pytest tests/unit_tests/eviction/test_count_min_sketch.py \
+    tests/unit_tests/eviction/test_doorkeeper.py \
+    tests/unit_tests/eviction/test_segmented_lru.py -v -o "addopts="
+```
+
+Note: The `-o "addopts="` flag overrides GPTCache's `pytest.ini` which adds
+`--html` flags requiring an optional dependency we don't need.
