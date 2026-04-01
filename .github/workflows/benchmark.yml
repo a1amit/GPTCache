@@ -1,6 +1,7 @@
 name: Benchmark CI
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -9,10 +10,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -31,6 +32,7 @@ jobs:
               -v -o "addopts="
 
       - name: Run quick synthetic benchmark
+        timeout-minutes: 15
         run: |
           python -u benchmarks/run_benchmarks.py \
               --dataset synthetic \
@@ -39,4 +41,4 @@ jobs:
               --policies lru,fifo,lfu,wtinylfu,wtinylfu_nocost \
               --thresholds 0.85 \
               --output results/ \
-              --workers -1
+              --workers 0
