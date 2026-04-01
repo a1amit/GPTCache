@@ -1,14 +1,10 @@
 name: Benchmark CI
 
 on:
-  push:
-    branches:
-      - feature/wtinylfu-cost-aware
-      - main
   pull_request:
     branches:
-      - feature/wtinylfu-cost-aware
       - main
+  workflow_dispatch:
 
 jobs:
   test-and-benchmark:
