@@ -209,15 +209,20 @@ def main():
     print(f"Summary: {summary_path}")
 
     # Print comparison table
-    print("\n" + "=" * 90)
-    print(f"{'Policy':<20} {'Size':>6} {'Threshold':>10} "
-          f"{'Hit Rate':>10} {'TokenSave':>10} {'p95 (ms)':>10} {'Time (s)':>9}")
-    print("-" * 90)
+    print("\n" + "=" * 130)
+    print(f"{'Policy':<20} {'Size':>6} {'Thresh':>7} "
+          f"{'Hit Rate':>9} {'TokSave':>8} "
+          f"{'p95 (ms)':>9} {'p99 (ms)':>9} {'Mean(ms)':>9} "
+          f"{'QPS':>8} {'Mem(MB)':>8} {'Time(s)':>8}")
+    print("-" * 130)
     for r in all_results:
-        print(f"{r['policy']:<20} {r['cache_size']:>6} {r['similarity_threshold']:>10.2f} "
-              f"{r['hit_rate']:>10.4f} {r['token_saving_ratio']:>10.4f} "
-              f"{r['latency_p95']:>10.1f} {r['wall_time_seconds']:>9.1f}")
-    print("=" * 90)
+        print(f"{r['policy']:<20} {r['cache_size']:>6} {r['similarity_threshold']:>7.2f} "
+              f"{r['hit_rate']:>9.4f} {r['token_saving_ratio']:>8.4f} "
+              f"{r['latency_p95']:>9.1f} {r['latency_p99']:>9.1f} "
+              f"{r['latency_mean']:>9.2f} "
+              f"{r['throughput_qps']:>8.1f} {r['peak_memory_mb']:>8.1f} "
+              f"{r['wall_time_seconds']:>8.1f}")
+    print("=" * 130)
 
 
 if __name__ == "__main__":
