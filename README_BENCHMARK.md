@@ -7,11 +7,23 @@ This is a fork of [zilliztech/GPTCache](https://github.com/zilliztech/GPTCache) 
 ## Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/a1amit/GPTCache.git
 cd GPTCache
 git checkout feature/wtinylfu-cost-aware
+```
 
+### Option A: Docker (recommended -- no setup required)
+
+```bash
+docker build -t gptcache-bench .
+docker run --rm gptcache-bench
+```
+
+This runs unit tests, benchmarks, ablation study, and visualization in one command. See [Docker Usage](#docker-usage-recommended-for-reproducibility) for saving results to your host machine.
+
+### Option B: Local environment
+
+```bash
 # Create and activate a virtual environment (Python 3.13 recommended)
 python -m venv .venv
 # Linux / macOS
