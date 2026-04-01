@@ -1,0 +1,47 @@
+name: Benchmark CI
+
+on:
+  push:
+    branches:
+      - feature/wtinylfu-cost-aware
+      - main
+  pull_request:
+    branches:
+      - feature/wtinylfu-cost-aware
+      - main
+
+jobs:
+  test-and-benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -r requirements-bench.txt
+
+      - name: Run eviction unit tests
+        run: |
+          python -m pytest tests/unit_tests/eviction/ \
+              --ignore=tests/unit_tests/eviction/test_distributed_cache.py \
+              -v -o "addopts="
+
+      - name: Run quick synthetic benchmark
+        run: |
+          python benchmarks/run_benchmarks.py \
+              --dataset synthetic \
+              --n_samples 1000 \
+              --cache_sizes 20,50 \
+              --policies lru,wtinylfu \
+              --thresholds 0.85 \
+              --output results/
