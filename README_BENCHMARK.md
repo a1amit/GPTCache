@@ -186,7 +186,7 @@ This executes:
 3. **Ablation study** — workload profiles, component ablation, window size sweep
 4. **Visualization** — generates comparison plots and improvement-vs-LRU analysis
 
-To save results and figures to your host machine:
+**Important:** Without volume mounts, all output stays inside the container and is lost when it exits. To save the JSON results, ablation data, and figures to your host machine, mount the output directories:
 
 ```bash
 # Linux / macOS / Git Bash
@@ -202,6 +202,14 @@ docker run --rm -v "%cd%\results:/app/results" -v "%cd%\results_ablation:/app/re
 # Windows PowerShell
 docker run --rm -v "${PWD}\results:/app/results" -v "${PWD}\results_ablation:/app/results_ablation" -v "${PWD}\figures:/app/figures" gptcache-bench
 ```
+
+After the run completes, the following files will be available on your host:
+
+| Directory | Contents |
+|-----------|----------|
+| `results/` | Per-policy JSON result files (`*_cs{size}_t{threshold}.json`) with hit rate, latency percentiles, token savings, throughput, and memory usage. Per-request logs (`*_log.json`) for CDF analysis. Combined `summary.json`. |
+| `results_ablation/` | `ablation_summary.json` with workload profile comparison, component ablation, and window size parameter sweep results. |
+| `figures/` | Publication-quality plots (PDF + PNG): hit rate, token savings, latency percentiles, improvement vs LRU, latency CDF, hit rate over time. Plain-text `summary_table.txt`. |
 
 ## Conda
 
