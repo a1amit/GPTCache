@@ -85,8 +85,16 @@ def _save(fig, output_dir, name):
     print(f"  Saved {name}.pdf + {name}.png")
 
 
+def _add_bar_labels(ax, bars, values, fmt=".3f", fontsize=7, offset=0.005):
+    """Add value labels above bars with automatic rotation when crowded."""
+    for bar, val in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + offset,
+                f"{val:{fmt}}", ha="center", va="bottom", fontsize=fontsize,
+                fontweight="bold", rotation=45)
+
+
 def plot_hit_rate_by_cache_size(results, output_dir: Path, threshold: float = 0.85):
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(9, 5.5))
 
     filtered = [r for r in results if abs(r["similarity_threshold"] - threshold) < 0.01]
     if not filtered:
@@ -108,24 +116,21 @@ def plot_hit_rate_by_cache_size(results, output_dir: Path, threshold: float = 0.
         label = POLICY_LABELS.get(policy, policy)
         bars = ax.bar(x + i * width - (len(policies) - 1) * width / 2,
                        rates, width, label=label, color=color, edgecolor="white")
-        # Add value labels on bars
-        for bar, val in zip(bars, rates):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.005,
-                    f"{val:.3f}", ha="center", va="bottom", fontsize=8, fontweight="bold")
+        _add_bar_labels(ax, bars, rates)
 
     ax.set_xlabel("Cache Size (entries)")
     ax.set_ylabel("Hit Rate")
     ax.set_title(f"Cache Hit Rate by Eviction Policy\n(similarity threshold = {threshold})")
     ax.set_xticks(x)
     ax.set_xticklabels(cache_sizes)
-    ax.legend(loc="lower right", frameon=True, fancybox=True, shadow=True)
-    ax.set_ylim(0, min(max(r["hit_rate"] for r in filtered) * 1.15, 1.05))
+    ax.legend(loc="upper left", frameon=True, fancybox=True, shadow=True)
+    ax.set_ylim(0, min(max(r["hit_rate"] for r in filtered) * 1.25, 1.05))
 
     _save(fig, output_dir, "hit_rate_by_cache_size")
 
 
 def plot_token_saving_by_cache_size(results, output_dir: Path, threshold: float = 0.85):
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(9, 5.5))
 
     filtered = [r for r in results if abs(r["similarity_threshold"] - threshold) < 0.01]
     if not filtered:
@@ -147,9 +152,7 @@ def plot_token_saving_by_cache_size(results, output_dir: Path, threshold: float 
         label = POLICY_LABELS.get(policy, policy)
         bars = ax.bar(x + i * width - (len(policies) - 1) * width / 2,
                        ratios, width, label=label, color=color, edgecolor="white")
-        for bar, val in zip(bars, ratios):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.005,
-                    f"{val:.3f}", ha="center", va="bottom", fontsize=8, fontweight="bold")
+        _add_bar_labels(ax, bars, ratios)
 
     ax.set_xlabel("Cache Size (entries)")
     ax.set_ylabel("Token Saving Ratio")
@@ -157,14 +160,14 @@ def plot_token_saving_by_cache_size(results, output_dir: Path, threshold: float 
                  f"(higher = more expensive responses retained in cache)")
     ax.set_xticks(x)
     ax.set_xticklabels(cache_sizes)
-    ax.legend(loc="lower right", frameon=True, fancybox=True, shadow=True)
-    ax.set_ylim(0, min(max(r["token_saving_ratio"] for r in filtered) * 1.15, 1.05))
+    ax.legend(loc="upper left", frameon=True, fancybox=True, shadow=True)
+    ax.set_ylim(0, min(max(r["token_saving_ratio"] for r in filtered) * 1.25, 1.05))
 
     _save(fig, output_dir, "token_saving_by_cache_size")
 
 
 def plot_latency_comparison(results, output_dir: Path, threshold: float = 0.85):
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(9, 5.5))
 
     max_cs = max(r["cache_size"] for r in results)
     filtered = [r for r in results
@@ -189,16 +192,20 @@ def plot_latency_comparison(results, output_dir: Path, threshold: float = 0.85):
             p95s.append(0)
             p99s.append(0)
 
-    ax.bar(x - width, p50s, width, label="p50 (median)", color="#4C72B0")
-    ax.bar(x, p95s, width, label="p95", color="#DD8452")
-    ax.bar(x + width, p99s, width, label="p99", color="#C44E52")
+    bars_p50 = ax.bar(x - width, p50s, width, label="p50 (median)", color="#4C72B0")
+    bars_p95 = ax.bar(x, p95s, width, label="p95", color="#DD8452")
+    bars_p99 = ax.bar(x + width, p99s, width, label="p99", color="#C44E52")
+
+    for bars, vals in [(bars_p50, p50s), (bars_p95, p95s), (bars_p99, p99s)]:
+        _add_bar_labels(ax, bars, vals, fmt=".1f", offset=0.5)
 
     labels = [POLICY_LABELS.get(p, p) for p in policies]
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=20, ha="right")
     ax.set_ylabel("Latency (ms)")
-    ax.set_title(f"Per-Request Latency Percentiles\n(cache_size = {max_cs})")
-    ax.legend(frameon=True, fancybox=True, shadow=True)
+    ax.set_title(f"Per-Request Latency Percentiles\n(cache size = {max_cs})")
+    ax.legend(frameon=True, fancybox=True, shadow=True, loc="upper left")
+    ax.set_ylim(0, max(p99s) * 1.25)
 
     _save(fig, output_dir, "latency_comparison")
 
@@ -212,8 +219,9 @@ def plot_improvement_summary(results, output_dir: Path, threshold: float = 0.85)
     cache_sizes = sorted(set(r["cache_size"] for r in filtered))
     policies = [p for p in _get_policies(filtered) if p != "lru"]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
+    handles_for_legend = []
     for ax, metric, title in [
         (ax1, "hit_rate", "Hit Rate Improvement vs LRU (%)"),
         (ax2, "token_saving_ratio", "Token Saving Improvement vs LRU (%)"),
@@ -241,22 +249,32 @@ def plot_improvement_summary(results, output_dir: Path, threshold: float = 0.85)
             label = POLICY_LABELS.get(policy, policy)
             bars = ax.bar(x + i * width - (len(policies) - 1) * width / 2,
                            improvements, width, label=label, color=color, edgecolor="white")
+            if ax is ax1:
+                handles_for_legend.append(bars[0])
             for bar, val in zip(bars, improvements):
                 if abs(val) > 0.01:
+                    y_pos = bar.get_height()
+                    va = "bottom" if val >= 0 else "top"
                     ax.text(bar.get_x() + bar.get_width() / 2,
-                            bar.get_height() + (0.1 if val >= 0 else -0.3),
-                            f"{val:+.2f}%", ha="center", va="bottom", fontsize=8,
-                            fontweight="bold")
+                            y_pos + (1.5 if val >= 0 else -1.5),
+                            f"{val:+.1f}%", ha="center", va=va, fontsize=7,
+                            fontweight="bold", rotation=45)
 
         ax.set_xlabel("Cache Size (entries)")
         ax.set_ylabel("Improvement vs LRU (%)")
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
         ax.set_xticks(x)
         ax.set_xticklabels(cache_sizes)
         ax.axhline(y=0, color="black", linewidth=0.8, linestyle="-")
-        ax.legend(frameon=True, fancybox=True, shadow=True, fontsize=9)
 
-    fig.suptitle("Performance Improvement Over LRU Baseline", fontsize=15, fontweight="bold", y=1.02)
+    # Single shared legend at the top
+    legend_labels = [POLICY_LABELS.get(p, p) for p in policies]
+    fig.legend(handles_for_legend, legend_labels, loc="upper center",
+               ncol=len(policies), frameon=True, fancybox=True, shadow=True,
+               fontsize=10, bbox_to_anchor=(0.5, 1.0))
+    fig.suptitle("Performance Improvement Over LRU Baseline",
+                 fontsize=15, fontweight="bold", y=1.06)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
     _save(fig, output_dir, "improvement_vs_lru")
 
 
@@ -271,27 +289,48 @@ def _load_logs(results_dir: Path):
     return logs
 
 
+def _parse_log_key(key):
+    """Extract (policy, cache_size) from a log filename key like 'synthetic_wtinylfu_cs50_t0.85'."""
+    parts = key.split("_")
+    policy = None
+    cache_size = None
+    for i, p in enumerate(parts):
+        if p.startswith("cs"):
+            policy = "_".join(parts[1:i]) if i > 1 else parts[0]
+            cache_size = int(p[2:])
+            break
+    return policy, cache_size
+
+
+_LINE_STYLES = ["solid", "dashed", "dashdot", "dotted", (0, (3, 1, 1, 1))]
+
+
 def plot_latency_cdf(results_dir: Path, output_dir: Path, threshold: float = 0.85):
-    """CDF of per-request latency for each policy (largest cache size)."""
+    """CDF of per-request latency for each policy at the largest cache size."""
     logs = _load_logs(results_dir)
     if not logs:
         print("  No per-request logs found — skipping latency CDF")
         return
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    max_cs = max(
+        (cs for _, cs in (_parse_log_key(k) for k in logs) if cs is not None),
+        default=None,
+    )
+    if max_cs is None:
+        return
 
+    fig, ax = plt.subplots(figsize=(9, 5.5))
+
+    order = list(POLICY_COLORS.keys())
+    plot_data = []
     for key, log in sorted(logs.items()):
-        # Extract policy from key
-        parts = key.split("_")
-        # Find the policy name (between dataset and csN)
-        policy = None
-        for i, p in enumerate(parts):
-            if p.startswith("cs"):
-                policy = "_".join(parts[1:i]) if i > 1 else parts[0]
-                break
-        if policy is None:
+        policy, cache_size = _parse_log_key(key)
+        if policy is None or cache_size != max_cs:
             continue
+        plot_data.append((policy, log))
+    plot_data.sort(key=lambda x: order.index(x[0]) if x[0] in order else 99)
 
+    for idx, (policy, log) in enumerate(plot_data):
         latencies = sorted([r["total_time_ms"] for r in log])
         n = len(latencies)
         if n == 0:
@@ -299,12 +338,21 @@ def plot_latency_cdf(results_dir: Path, output_dir: Path, threshold: float = 0.8
         cdf = np.arange(1, n + 1) / n
         color = POLICY_COLORS.get(policy, "#999999")
         label = POLICY_LABELS.get(policy, policy)
-        ax.plot(latencies, cdf, label=label, color=color, linewidth=1.5)
+        ls = _LINE_STYLES[idx % len(_LINE_STYLES)]
+        ax.plot(latencies, cdf, label=label, color=color, linewidth=2.0,
+                linestyle=ls)
+
+    # Reference lines at p50, p95, p99
+    for pct, lbl in [(0.50, "p50"), (0.95, "p95"), (0.99, "p99")]:
+        ax.axhline(y=pct, color="gray", linewidth=0.7, linestyle=":",
+                   alpha=0.6)
+        ax.text(ax.get_xlim()[0] + 1, pct + 0.01, lbl, fontsize=8,
+                color="gray", va="bottom")
 
     ax.set_xlabel("Per-Request Latency (ms)")
     ax.set_ylabel("Cumulative Probability")
-    ax.set_title("Latency CDF by Eviction Policy")
-    ax.legend(frameon=True, fancybox=True, shadow=True)
+    ax.set_title(f"Latency CDF by Eviction Policy (cache size = {max_cs})")
+    ax.legend(frameon=True, fancybox=True, shadow=True, loc="lower right")
     ax.set_ylim(0, 1.05)
 
     _save(fig, output_dir, "latency_cdf")
@@ -312,22 +360,25 @@ def plot_latency_cdf(results_dir: Path, output_dir: Path, threshold: float = 0.8
 
 def plot_hit_rate_over_time(results_dir: Path, output_dir: Path,
                             threshold: float = 0.85, window: int = 200):
-    """Sliding-window hit rate over time for each policy (largest cache size)."""
+    """Sliding-window hit rate over time for each policy at the largest cache size."""
     logs = _load_logs(results_dir)
     if not logs:
         print("  No per-request logs found — skipping hit rate curve")
         return
 
+    # Only plot the largest cache size
+    max_cs = max(
+        (cs for _, cs in (_parse_log_key(k) for k in logs) if cs is not None),
+        default=None,
+    )
+    if max_cs is None:
+        return
+
     fig, ax = plt.subplots(figsize=(10, 5))
 
     for key, log in sorted(logs.items()):
-        parts = key.split("_")
-        policy = None
-        for i, p in enumerate(parts):
-            if p.startswith("cs"):
-                policy = "_".join(parts[1:i]) if i > 1 else parts[0]
-                break
-        if policy is None:
+        policy, cache_size = _parse_log_key(key)
+        if policy is None or cache_size != max_cs:
             continue
 
         hits = [r["hit"] for r in log]
@@ -350,8 +401,8 @@ def plot_hit_rate_over_time(results_dir: Path, output_dir: Path,
 
     ax.set_xlabel("Query Number")
     ax.set_ylabel(f"Hit Rate (sliding window = {window})")
-    ax.set_title("Cache Hit Rate Over Time")
-    ax.legend(frameon=True, fancybox=True, shadow=True)
+    ax.set_title(f"Cache Hit Rate Over Time (cache size = {max_cs})")
+    ax.legend(frameon=True, fancybox=True, shadow=True, loc="upper right")
     ax.set_ylim(0, None)
 
     _save(fig, output_dir, "hit_rate_over_time")

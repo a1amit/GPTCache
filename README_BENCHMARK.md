@@ -110,6 +110,8 @@ This produces the following in the `figures/` directory:
 - `token_saving_by_cache_size.{pdf,png}` -- token saving ratio by cache size and policy
 - `latency_comparison.{pdf,png}` -- p50/p95/p99 lookup latency by policy
 - `improvement_vs_lru.{pdf,png}` -- percentage improvement over LRU baseline (hit rate + token saving)
+- `latency_cdf.{pdf,png}` -- cumulative distribution of per-request latency
+- `hit_rate_over_time.{pdf,png}` -- sliding-window hit rate over the query stream
 - `summary_table.txt` -- plain-text comparison table
 
 ## Available Eviction Policies
