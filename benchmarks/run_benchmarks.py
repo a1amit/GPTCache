@@ -167,8 +167,16 @@ def main():
         ]
         with ProcessPoolExecutor(max_workers=n_workers) as pool:
             futures = {pool.submit(_run_one_config, wa): wa for wa in worker_args}
+            done_count = 0
             for future in as_completed(futures):
-                all_results.append(future.result())
+                done_count += 1
+                d = future.result()
+                all_results.append(d)
+                print(f"  [{done_count}/{total}] policy={d['policy']}, "
+                      f"size={d['cache_size']} -> "
+                      f"hit_rate={d['hit_rate']:.4f}, "
+                      f"token_save={d['token_saving_ratio']:.4f}",
+                      flush=True)
         # Sort results to match config order (cache_size, policy, threshold)
         policy_order = {p: i for i, p in enumerate(policies)}
         all_results.sort(key=lambda r: (
