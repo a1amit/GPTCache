@@ -65,7 +65,6 @@ GPTCache, an open-source semantic cache by Zilliz, intercepts LLM API calls, enc
 However, GPTCache's built-in eviction policies (LRU, FIFO, LFU, Random Replacement) treat all cached entries as equal, ignoring a critical property of LLM workloads: \textbf{response regeneration cost varies enormously}.
 A 2000-token response is far more expensive to recompute than a 20-token one.
 When the cache is full and an entry must be evicted, a cost-unaware policy may discard an expensive response while retaining a cheap one---wasting the regeneration cost that was already paid.
-
 This project implements a \textbf{Token-Cost-Aware W-TinyLFU} eviction policy that combines frequency-based admission filtering with cost-weighted eviction decisions, preferentially retaining high-cost cached responses.
 
 \subsection{Related Work}
