@@ -282,10 +282,12 @@ def _load_logs(results_dir: Path):
     """Load per-request logs from *_log.json files."""
     logs = {}
     for p in results_dir.glob("*_log.json"):
-        # Parse key from filename: dataset_policy_csN_tT_log.json
         key = p.stem.replace("_log", "")
-        with open(p) as f:
-            logs[key] = json.load(f)
+        try:
+            with open(p) as f:
+                logs[key] = json.load(f)
+        except json.JSONDecodeError:
+            pass  # skip corrupt log files from parallel writes
     return logs
 
 

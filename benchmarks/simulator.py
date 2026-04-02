@@ -5,6 +5,7 @@ recording per-request metrics for hit rate, latency, and cost analysis.
 """
 
 import os
+import tempfile
 import time
 import tracemalloc
 from typing import Dict, List, Optional
@@ -105,7 +106,12 @@ class CacheSimulator:
         is_wtinylfu = policy_name.startswith("wtinylfu")
 
         scalar = CacheBase("sqlite", sql_url="sqlite:///:memory:")
-        vector = VectorBase("faiss", dimension=dimension)
+        # Use a unique temp directory per instance to avoid FAISS index
+        # collisions when running multiple workers in parallel.
+        self._faiss_tmpdir = tempfile.mkdtemp(prefix="gptcache_faiss_")
+        faiss_path = os.path.join(self._faiss_tmpdir, "faiss.index")
+        vector = VectorBase("faiss", dimension=dimension,
+                            index_path=faiss_path)
 
         if is_wtinylfu:
             # For W-TinyLFU, we must pre-build (GPTCache doesn't know about it)
@@ -258,6 +264,10 @@ class CacheSimulator:
         result.finalize()
 
         data_manager.close()
+        # Clean up temp FAISS directory
+        if hasattr(self, "_faiss_tmpdir"):
+            import shutil
+            shutil.rmtree(self._faiss_tmpdir, ignore_errors=True)
 
         if verbose:
             print(f"  Done: hit_rate={result.hit_rate:.4f}, "
