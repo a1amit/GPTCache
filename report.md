@@ -396,7 +396,7 @@ The cost-aware extension is the key differentiator: by weighting eviction decisi
 
 [1] G. Einziger, R. Friedman, and B. Manes, "TinyLFU: A Highly Efficient Cache Admission Policy," ACM Trans. Storage, 2017. arXiv:1512.00727.
 
-[2] K. Gill et al., "GPT Semantic Cache: Reducing LLM Costs and Latency via Semantic Embedding Caching," arXiv:2411.05276, 2024.
+[2] S. Regmi and C. P. Pun, "GPT Semantic Cache: Reducing LLM Costs and Latency via Semantic Embedding Caching," arXiv:2411.05276, 2024.
 
 [3] L. Zheng et al., "LMSYS-Chat-1M: A Large-Scale Real-World LLM Conversation Dataset," arXiv:2309.11998, 2023.
 
