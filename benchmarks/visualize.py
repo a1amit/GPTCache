@@ -85,16 +85,15 @@ def _save(fig, output_dir, name):
     print(f"  Saved {name}.pdf + {name}.png")
 
 
-def _add_bar_labels(ax, bars, values, fmt=".2f", fontsize=6, offset=0.005):
+def _add_bar_labels(ax, bars, values, fmt=".2f", fontsize=7, offset=0.005):
     """Add value labels above bars."""
     for bar, val in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + offset,
-                f"{val:{fmt}}", ha="center", va="bottom", fontsize=fontsize,
-                rotation=90)
+                f"{val:{fmt}}", ha="center", va="bottom", fontsize=fontsize)
 
 
 def plot_hit_rate_by_cache_size(results, output_dir: Path, threshold: float = 0.85):
-    fig, ax = plt.subplots(figsize=(9, 5.5))
+    fig, ax = plt.subplots(figsize=(12, 5.5))
 
     filtered = [r for r in results if abs(r["similarity_threshold"] - threshold) < 0.01]
     if not filtered:
@@ -130,7 +129,7 @@ def plot_hit_rate_by_cache_size(results, output_dir: Path, threshold: float = 0.
 
 
 def plot_token_saving_by_cache_size(results, output_dir: Path, threshold: float = 0.85):
-    fig, ax = plt.subplots(figsize=(9, 5.5))
+    fig, ax = plt.subplots(figsize=(12, 5.5))
 
     filtered = [r for r in results if abs(r["similarity_threshold"] - threshold) < 0.01]
     if not filtered:
@@ -167,7 +166,7 @@ def plot_token_saving_by_cache_size(results, output_dir: Path, threshold: float 
 
 
 def plot_latency_comparison(results, output_dir: Path, threshold: float = 0.85):
-    fig, ax = plt.subplots(figsize=(9, 5.5))
+    fig, ax = plt.subplots(figsize=(12, 5.5))
 
     max_cs = max(r["cache_size"] for r in results)
     filtered = [r for r in results
@@ -219,7 +218,7 @@ def plot_improvement_summary(results, output_dir: Path, threshold: float = 0.85)
     cache_sizes = sorted(set(r["cache_size"] for r in filtered))
     policies = [p for p in _get_policies(filtered) if p != "lru"]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 6))
 
     handles_for_legend = []
     for ax, metric, title in [
@@ -256,9 +255,8 @@ def plot_improvement_summary(results, output_dir: Path, threshold: float = 0.85)
                     y_pos = bar.get_height()
                     va = "bottom" if val >= 0 else "top"
                     ax.text(bar.get_x() + bar.get_width() / 2,
-                            y_pos + (1.0 if val >= 0 else -1.0),
-                            f"{val:+.0f}%", ha="center", va=va, fontsize=6,
-                            rotation=90)
+                            y_pos + (1.5 if val >= 0 else -1.5),
+                            f"{val:+.0f}%", ha="center", va=va, fontsize=7)
 
         ax.set_xlabel("Cache Size (entries)")
         ax.set_ylabel("Improvement vs LRU (%)")
@@ -320,7 +318,7 @@ def plot_latency_cdf(results_dir: Path, output_dir: Path, threshold: float = 0.8
     if max_cs is None:
         return
 
-    fig, ax = plt.subplots(figsize=(9, 5.5))
+    fig, ax = plt.subplots(figsize=(12, 5.5))
 
     order = list(POLICY_COLORS.keys())
     plot_data = []
@@ -375,7 +373,7 @@ def plot_hit_rate_over_time(results_dir: Path, output_dir: Path,
     if max_cs is None:
         return
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(13, 5.5))
 
     for key, log in sorted(logs.items()):
         policy, cache_size = _parse_log_key(key)
