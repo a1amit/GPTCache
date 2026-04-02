@@ -44,6 +44,8 @@ class BenchmarkResult:
     wall_time_seconds: float = 0.0
     peak_memory_mb: float = 0.0
     throughput_qps: float = 0.0
+    cpu_user_seconds: float = 0.0
+    cpu_system_seconds: float = 0.0
     # Per-request log
     request_log: List[RequestMetrics] = field(default_factory=list)
     # Extra params

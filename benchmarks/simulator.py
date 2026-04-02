@@ -4,6 +4,7 @@ Replays a sequence of (prompt, response) pairs against a GPTCache instance,
 recording per-request metrics for hit rate, latency, and cost analysis.
 """
 
+import os
 import time
 import tracemalloc
 from typing import Dict, List, Optional
@@ -181,6 +182,7 @@ class CacheSimulator:
         )
 
         start_wall = time.perf_counter()
+        start_cpu = os.times()
         n = len(entries)
         all_request_metrics: List[RequestMetrics] = []
         next_id = 1  # track insert IDs locally instead of querying SQLite
@@ -245,10 +247,13 @@ class CacheSimulator:
 
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
+        end_cpu = os.times()
 
         result.request_log = all_request_metrics[warmup_queries:]
         result.peak_memory_mb = peak / (1024 * 1024)
         result.wall_time_seconds = time.perf_counter() - start_wall
+        result.cpu_user_seconds = end_cpu.user - start_cpu.user
+        result.cpu_system_seconds = end_cpu.system - start_cpu.system
         result.total_evictions = self._eviction_count
         result.finalize()
 
