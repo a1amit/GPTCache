@@ -89,7 +89,7 @@ pip install -e .
 Run a fast benchmark using a generated Zipfian workload -- no dataset downloads required:
 
 ```
-python benchmarks/run_benchmarks.py --dataset synthetic --n_samples 500 --cache_sizes 50 --policies "lru,wtinylfu" --output results/ --workers -1
+python benchmarks/run_benchmarks.py --dataset synthetic --n_samples 500 --cache_sizes 50 --policies "lru,wtinylfu" --output results/ --workers -1 --repeats 3
 ```
 
 This will replay 500 synthetic queries against each policy and print a comparison table to the console. Results are saved as JSON files in the `results/` directory.
@@ -106,32 +106,36 @@ export HF_TOKEN="hf_your_token"
 # PowerShell
 $env:HF_TOKEN = "hf_your_token"
 
-python benchmarks/run_benchmarks.py --dataset lmsys --n_samples 3000 --cache_sizes "20,50,100" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_lmsys/ --workers -1
+python benchmarks/run_benchmarks.py --dataset lmsys --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_lmsys/ --workers -1 --repeats 3
 ```
 
 **WildChat-1M:**
 
 ```
-python benchmarks/run_benchmarks.py --dataset wildchat --n_samples 3000 --cache_sizes "20,50,100" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_wildchat/ --workers -1
+python benchmarks/run_benchmarks.py --dataset wildchat --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_wildchat/ --workers -1 --repeats 3
 ```
 
 **Synthetic** (no downloads required):
 
 ```
-python benchmarks/run_benchmarks.py --dataset synthetic --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results/ --workers -1
+python benchmarks/run_benchmarks.py --dataset synthetic --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results/ --workers -1 --repeats 3
 ```
 
-## Parallel Execution
+## Parallel Execution and Repeated Trials
 
-The benchmark runner supports parallel execution via the `--workers` flag:
+The benchmark runner supports parallel execution and repeated trials for statistical significance:
 
 | Flag | Behavior |
 |------|----------|
 | `--workers 0` | Sequential (default) -- shows per-query progress |
 | `--workers 4` | Use 4 parallel processes |
 | `--workers -1` | Use all available CPU cores |
+| `--repeats 1` | Single trial (default) |
+| `--repeats 3` | Run each config 3 times with shuffled query order, report mean ± std |
 
-All prompt embeddings are pre-computed in a single batch before any benchmark configs run. Each config then runs in its own process with an independent cache instance. This brings a typical 15-config benchmark from ~45 minutes down to ~4 minutes.
+All prompt embeddings are pre-computed in a single batch before any benchmark configs run. Each config then runs in its own process with an independent cache instance. When `--repeats N` is used (N > 1), the query order is shuffled with a different random seed per trial to create meaningful variation in eviction decisions. The summary JSON reports mean, std, min, and max for each metric.
+
+A typical 15-config benchmark with 3 repeats (45 total runs) takes ~5-10 minutes with `--workers -1`.
 
 ## Visualization
 
