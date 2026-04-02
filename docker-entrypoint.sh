@@ -29,7 +29,8 @@ python -u benchmarks/run_benchmarks.py \
     --policies lru,fifo,lfu,wtinylfu,wtinylfu_nocost \
     --thresholds 0.85 \
     --output results/ \
-    --workers 0
+    --workers 0 \
+    --repeats 3
 echo ""
 
 # --- Phase 3: Ablation Study ---
