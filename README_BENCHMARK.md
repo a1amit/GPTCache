@@ -12,7 +12,7 @@ cd GPTCache
 git checkout feature/wtinylfu-cost-aware
 ```
 
-> **⚠️ RECOMMENDED: Run benchmarks locally with `--workers -1` (all CPU cores). This takes ~5 minutes. Docker runs sequentially inside the container and can take 40+ minutes. Use Docker only for reproducibility verification, not for day-to-day benchmarking.**
+> **⚠️ STRONGLY RECOMMENDED: Run benchmarks locally (Option B) with `--workers -1 --repeats 3`. This takes ~10 minutes. Docker runs sequentially without parallel workers and with 3 repeated trials, which can take 2+ hours depending on resource allocation. Use Docker only to verify that the environment builds and tests pass, not for full benchmark runs.**
 
 ### Option A: Docker (no setup required)
 
