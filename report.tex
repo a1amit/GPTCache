@@ -99,12 +99,29 @@ Language / Stars    & Python (100\%), $\sim$8\,000 GitHub stars, MIT \\
 \end{tabular}
 \end{table}
 
-\textbf{Why GPTCache}: (1)~Clean eviction abstraction---the \texttt{EvictionBase} class requires only \texttt{put}, \texttt{get}, and \texttt{policy} methods, isolated in \texttt{gptcache/manager/eviction/}.
-(2)~Explicit gap in eviction sophistication---current policies ignore access frequency, entry cost, and entry size; the roadmap lists cost-aware eviction as a development goal.
-(3)~Built-in semantic matching pipeline.
-(4)~Mature and stable codebase with comprehensive test suite.
+\textbf{Why GPTCache:}
+\begin{enumerate}[nosep]
+  \item \textbf{Clean eviction abstraction} --- the \texttt{EvictionBase} class requires only \texttt{put}, \texttt{get}, and \texttt{policy} methods, isolated in \texttt{gptcache/manager/eviction/}.
+  \item \textbf{Explicit gap in eviction sophistication} --- current policies ignore access frequency, entry cost, and entry size; the roadmap lists cost-aware eviction as a development goal.
+  \item \textbf{Built-in semantic matching pipeline} --- embedding generation, vector search, and similarity evaluation are already implemented.
+  \item \textbf{Mature and stable codebase} --- comprehensive test suite (\texttt{pytest}), documentation, and stable since August 2024.
+\end{enumerate}
 
-Alternatives considered: LangChain Cache (eviction delegated to backend), vLLM/SGLang (KV cache at inference level), LMCache (tied to GPU engines), ModelCache (smaller community).
+\textbf{Alternatives considered:}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Library} & \textbf{Why Not Selected} \\
+\midrule
+LangChain Cache & Eviction delegated to backend (Redis, etc.), not a first-class concept \\
+vLLM / SGLang & KV cache at inference level; no pluggable eviction policy \\
+LMCache & Tied to GPU inference engines (vLLM/SGLang) \\
+ModelCache & Smaller community, less clean eviction abstraction \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 %----------------------------------------------------------------------
 \section{Extension Design}
