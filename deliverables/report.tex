@@ -410,11 +410,11 @@ Even the worst-case overhead (${\sim}40$\,ms) is negligible vs.\ an LLM API call
 \toprule
 \textbf{Policy} & \textbf{cs\,=\,50} & \textbf{cs\,=\,100} & \textbf{cs\,=\,200} \\
 \midrule
-LRU            & 119.9 & 120.7 & 128.2 \\
-FIFO           & 115.4 & 119.1 & 127.8 \\
-LFU            & 120.7 & 121.9 & 127.2 \\
-W-TinyLFU      & 167.9\;(+40\%) & 151.5\;(+26\%) & 139.4\;(+9\%) \\
-W-TinyLFU+Cost & 163.2\;(+36\%) & 148.3\;(+23\%) & 140.1\;(+9\%) \\
+LRU            & 138.2 & 151.8 & 156.1 \\
+FIFO           & 137.2 & 156.4 & 152.2 \\
+LFU            & 145.2 & 160.2 & 153.8 \\
+W-TinyLFU      & 194.2\;(+41\%) & 172.8\;(+14\%) & 166.2\;(+6\%) \\
+W-TinyLFU+Cost & 193.9\;(+40\%) & 181.1\;(+19\%) & 158.8\;(+2\%) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -451,7 +451,7 @@ We use threshold~0.80, identified as the SOTA optimal by~\cite{gptsemcache}.
     \caption{Token saving ratio by cache size.}
   \end{subfigure}
   \caption{LMSYS-Chat-1M results (threshold${}=0.80$).
-  LFU achieves highest hit rate; W-TinyLFU+Cost achieves highest token savings.}
+  LFU achieves highest hit rate; W-TinyLFU+Cost achieves highest token savings at small cache sizes.}
   \label{fig:lmsys080}
 \end{figure}
 
@@ -470,12 +470,12 @@ We use threshold~0.80, identified as the SOTA optimal by~\cite{gptsemcache}.
 \textbf{Policy} & Hit\% & TokSave\% & Hit\% & TokSave\% & Hit\% & TokSave\% \\
 \midrule
 LRU   & 5.2\,{\tiny$\pm$0.3} & 3.1\,{\tiny$\pm$0.4} & 7.4\,{\tiny$\pm$0.4} & 4.9\,{\tiny$\pm$0.4} & 9.7\,{\tiny$\pm$0.5} & 7.0\,{\tiny$\pm$0.4} \\
-FIFO  & 4.5\,{\tiny$\pm$0.2} & 3.3\,{\tiny$\pm$0.1} & 6.3\,{\tiny$\pm$0.2} & 4.2\,{\tiny$\pm$0.3} & 8.0\,{\tiny$\pm$0.1} & 5.3\,{\tiny$\pm$0.2} \\
+FIFO  & 4.5\,{\tiny$\pm$0.2} & 3.3\,{\tiny$\pm$0.1} & 6.3\,{\tiny$\pm$0.2} & 4.2\,{\tiny$\pm$0.4} & 8.0\,{\tiny$\pm$0.1} & 5.3\,{\tiny$\pm$0.3} \\
 \rowcolor{maingreen!10}
-\textbf{LFU}   & \textbf{7.1}\,{\tiny$\pm$0.4} & 5.0\,{\tiny$\pm$0.7} & \textbf{9.6}\,{\tiny$\pm$0.5} & 7.2\,{\tiny$\pm$0.5} & \textbf{11.6}\,{\tiny$\pm$0.8} & 8.5\,{\tiny$\pm$0.9} \\
-W-TinyLFU & 6.4\,{\tiny$\pm$0.7} & 4.2\,{\tiny$\pm$0.9} & 8.0\,{\tiny$\pm$0.5} & 5.3\,{\tiny$\pm$0.6} & 10.0\,{\tiny$\pm$0.2} & 7.7\,{\tiny$\pm$0.3} \\
+\textbf{LFU}   & \textbf{7.1}\,{\tiny$\pm$0.4} & 5.0\,{\tiny$\pm$0.7} & \textbf{9.6}\,{\tiny$\pm$0.5} & \textbf{7.2}\,{\tiny$\pm$0.6} & \textbf{11.6}\,{\tiny$\pm$0.8} & 8.5\,{\tiny$\pm$0.9} \\
+W-TinyLFU & 6.4\,{\tiny$\pm$0.7} & 4.2\,{\tiny$\pm$0.9} & 7.8\,{\tiny$\pm$0.4} & 5.3\,{\tiny$\pm$0.6} & 10.0\,{\tiny$\pm$0.2} & 7.7\,{\tiny$\pm$0.3} \\
 \rowcolor{maingreen!10}
-\textbf{W-TinyLFU+Cost} & 7.2\,{\tiny$\pm$0.3} & \textbf{6.0}\,{\tiny$\pm$0.4} & 8.6\,{\tiny$\pm$0.4} & \textbf{6.9}\,{\tiny$\pm$0.7} & 9.8\,{\tiny$\pm$0.3} & \textbf{8.5}\,{\tiny$\pm$0.5} \\
+\textbf{W-TinyLFU+Cost} & 7.2\,{\tiny$\pm$0.3} & \textbf{6.0}\,{\tiny$\pm$0.4} & 8.6\,{\tiny$\pm$0.4} & 6.9\,{\tiny$\pm$0.7} & 9.8\,{\tiny$\pm$0.3} & \textbf{8.5}\,{\tiny$\pm$0.5} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -506,7 +506,7 @@ This experiment tests robustness to threshold changes.
     \caption{Token savings (threshold${}=0.85$).}
   \end{subfigure}
   \caption{LMSYS results at stricter threshold (0.85).
-  Hit rates drop ${\sim}40$\% vs.\ 0.80 but W-TinyLFU+Cost retains highest token savings.}
+  Hit rates drop ${\sim}40$\% vs.\ 0.80; W-TinyLFU+Cost leads token savings at cs\,=\,50, while LFU leads at larger caches.}
   \label{fig:lmsys085}
 \end{figure}
 
@@ -525,11 +525,11 @@ This experiment tests robustness to threshold changes.
 \textbf{Policy} & Hit\% & TokSave\% & Hit\% & TokSave\% & Hit\% & TokSave\% \\
 \midrule
 LRU   & 3.5\,{\tiny$\pm$0.1} & 1.7\,{\tiny$\pm$0.1} & 5.2\,{\tiny$\pm$0.1} & 2.7\,{\tiny$\pm$0.3} & 7.1\,{\tiny$\pm$0.1} & 3.6\,{\tiny$\pm$0.2} \\
-FIFO  & 2.9\,{\tiny$\pm$0.1} & 1.5\,{\tiny$\pm$0.1} & 4.2\,{\tiny$\pm$0.1} & 2.1\,{\tiny$\pm$0.1} & 6.1\,{\tiny$\pm$0.5} & 3.1\,{\tiny$\pm$0.2} \\
-\textbf{LFU}   & \textbf{5.4}\,{\tiny$\pm$0.5} & 2.4\,{\tiny$\pm$0.2} & \textbf{8.3}\,{\tiny$\pm$0.4} & 4.5\,{\tiny$\pm$0.6} & \textbf{9.1}\,{\tiny$\pm$0.4} & 5.4\,{\tiny$\pm$0.3} \\
-W-TinyLFU & 4.2\,{\tiny$\pm$0.7} & 2.7\,{\tiny$\pm$0.1} & 6.0\,{\tiny$\pm$1.3} & 3.2\,{\tiny$\pm$1.3} & 7.2\,{\tiny$\pm$0.8} & 4.1\,{\tiny$\pm$0.4} \\
+FIFO  & 2.9\,{\tiny$\pm$0.1} & 1.5\,{\tiny$\pm$0.1} & 4.2\,{\tiny$\pm$0.1} & 2.1\,{\tiny$\pm$0.1} & 6.1\,{\tiny$\pm$0.1} & 3.1\,{\tiny$\pm$0.3} \\
+\textbf{LFU}   & \textbf{5.4}\,{\tiny$\pm$0.5} & 2.4\,{\tiny$\pm$0.2} & \textbf{8.3}\,{\tiny$\pm$0.4} & \textbf{5.4}\,{\tiny$\pm$0.4} & \textbf{9.1}\,{\tiny$\pm$0.4} & \textbf{5.4}\,{\tiny$\pm$0.3} \\
+W-TinyLFU & 4.2\,{\tiny$\pm$0.7} & 2.7\,{\tiny$\pm$1.1} & 6.0\,{\tiny$\pm$1.3} & 3.2\,{\tiny$\pm$1.3} & 7.2\,{\tiny$\pm$0.8} & 4.1\,{\tiny$\pm$0.5} \\
 \rowcolor{maingreen!10}
-\textbf{W-TinyLFU+Cost} & 4.4\,{\tiny$\pm$1.0} & \textbf{3.0}\,{\tiny$\pm$0.8} & 5.7\,{\tiny$\pm$0.6} & \textbf{3.6}\,{\tiny$\pm$0.4} & 7.9\,{\tiny$\pm$1.2} & \textbf{4.9}\,{\tiny$\pm$1.1} \\
+\textbf{W-TinyLFU+Cost} & 4.4\,{\tiny$\pm$1.0} & \textbf{3.0}\,{\tiny$\pm$0.8} & 5.7\,{\tiny$\pm$0.6} & 3.6\,{\tiny$\pm$0.4} & 7.9\,{\tiny$\pm$1.2} & 4.9\,{\tiny$\pm$1.1} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -642,17 +642,21 @@ Performance is robust from 0.5--5\%.
 
 \subsection{Trade-offs}
 
-\textbf{Hit rate vs.\ latency}: W-TinyLFU adds ${\sim}38$--43\% overhead at p95 for small caches where eviction is frequent, narrowing to 9\% CPU overhead at cs\,=\,200.
+\textbf{Hit rate vs.\ latency}: W-TinyLFU adds ${\sim}38$--43\% overhead at p95 for small caches where eviction is frequent, narrowing to 2--6\% CPU overhead at cs\,=\,200.
 In LLM deployments, this overhead (${\sim}40$\,ms worst case) is negligible compared to API calls (100--2\,000\,ms).
 The higher hit rate means fewer API calls, yielding net latency reduction.
 
-\textbf{Cost-awareness value}: Token saving ratio consistently exceeds hit rate improvement.
-At cs\,=\,50 (synthetic), hit rate is 74\% higher than LRU, but token savings are 74\% higher.
-This proves the policy caches \textit{better}, not just \textit{more}.
+\textbf{Cost-awareness value}: Token saving ratio consistently exceeds hit rate in absolute terms.
+At cs\,=\,50 (synthetic), W-TinyLFU+Cost achieves 53.8\% hit rate but 76.4\% token savings---the 23\,pp gap confirms the policy preferentially retains expensive responses, caching \textit{better}, not just \textit{more}.
 
 \textbf{Synthetic vs.\ real data}: Synthetic Zipfian data shows dramatic improvements (76.4\% vs.\ 44.0\% token savings) because skewed distributions create strong frequency signals.
 Real LMSYS data shows smaller absolute improvements (6.0\% vs.\ 3.1\% at cs\,=\,50) but consistent relative gains (+94\%).
 Lower absolute hit rates on LMSYS reflect query diversity, not policy weakness.
+
+\textbf{Admission filter vs.\ workload diversity}: The TinyLFU admission filter provides its largest gains under skewed access patterns (synthetic Zipfian), where one-hit-wonder rejection is critical.
+On real LMSYS data at larger cache sizes (cs\,$\geq$\,100), query diversity is high and most queries are unique, leaving fewer one-hit-wonders to filter; here plain LFU becomes competitive on token savings (e.g.\ 7.2\% vs.\ 6.9\% at cs\,=\,100, threshold\,=\,0.80, with overlapping std ranges).
+This suggests that LLM conversation workloads may benefit from a larger window segment or relaxed admission threshold.
+In all cases, both W-TinyLFU variants substantially outperform GPTCache's default LRU.
 
 \subsection{Sensitivity to Parameters}
 
@@ -691,14 +695,21 @@ GitHub Actions CI runs on manual trigger.
 \section{Conclusion \& Future Work}
 %----------------------------------------------------------------------
 
-We implemented a Token-Cost-Aware W-TinyLFU eviction policy for GPTCache achieving consistent improvements over all baselines:
+We extended W-TinyLFU with token-cost-aware admission for LLM semantic caching, where response regeneration costs vary by orders of magnitude.
+The extension multiplies each candidate's TinyLFU frequency estimate by its response token count, biasing eviction decisions toward retaining expensive entries.
+
+Key results vs.\ GPTCache's default LRU:
 
 \begin{itemize}[nosep]
   \item \textbf{Synthetic}: 76.4\,{\small$\pm$3.5}\% token savings vs.\ 44.0\,{\small$\pm$0.2}\% for LRU at cs\,=\,50 (+74\% relative)
   \item \textbf{LMSYS (t\,=\,0.80)}: 6.0\,{\small$\pm$0.4}\% vs.\ 3.1\,{\small$\pm$0.4}\% for LRU at cs\,=\,50 (+94\% relative)
-  \item \textbf{Ablation}: Cost-awareness adds +6.9\,pp token savings on top of frequency-based admission
-  \item \textbf{Statistical significance}: Non-overlapping std ranges across 3 independent trials
+  \item \textbf{Ablation}: Cost-awareness adds +6.9\,pp token savings on top of frequency-based admission alone
+  \item \textbf{Consistency}: Non-overlapping std ranges across 3 independent trials with shuffled query order
 \end{itemize}
+
+An interesting domain-specific observation is that the TinyLFU admission filter provides its largest gains under skewed (Zipfian) access patterns, where one-hit-wonder filtering is critical.
+On real LMSYS conversations---where query diversity is high and most queries are unique---the admission filter has fewer one-hit-wonders to reject, and plain LFU becomes competitive at larger cache sizes.
+This suggests that LLM conversation workloads may warrant a larger window segment or a lower admission threshold to better accommodate their high-diversity access patterns.
 
 \textbf{Future work}: Size-aware capacity management, adaptive window sizing via hill climbing, TTL integration, upstream PR to GPTCache.
 
@@ -742,13 +753,23 @@ tests/unit_tests/eviction/    -- 38 unit tests
 Dockerfile                    -- Docker reproducibility
 environment.yml               -- Conda environment
 README_BENCHMARK.md           -- Benchmark guide
+
+deliverables/                 -- All project deliverables
+    README.md                 -- Checklist mapping guidelines to repo
+    report.tex                -- This report (source)
+    figures_synthetic/        -- Plots (synthetic workload)
+    figures_lmsys_080/        -- Plots (LMSYS t=0.80)
+    figures_lmsys_085/        -- Plots (LMSYS t=0.85)
+    results_synthetic/        -- Raw JSON results + per-request logs
+    results_lmsys_080/        -- Raw JSON results + per-request logs
+    results_lmsys_085/        -- Raw JSON results + per-request logs
 \end{lstlisting}
 
 \section{Full Metrics Tables}
 
 \begin{table}[H]
 \centering
-\caption{Complete metrics -- Synthetic (threshold = 0.85, single representative trial).}
+\caption{Complete metrics -- Synthetic (threshold = 0.85, mean across 3 trials).}
 \label{tab:full_synthetic}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -779,7 +800,7 @@ W-TinyLFU+Cost   & 200 & 0.919 & 0.977 & 32.6 & 65.8  & 89.1  & 34.1 & 15.7 & 1.
 
 \begin{table}[H]
 \centering
-\caption{Complete metrics -- LMSYS-Chat-1M (threshold = 0.80, single representative trial).}
+\caption{Complete metrics -- LMSYS-Chat-1M (threshold = 0.80, mean across 3 trials).}
 \label{tab:full_lmsys080}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -796,21 +817,21 @@ W-TinyLFU+Cost   & 50  & 0.072 & 0.060 & 74.5 & 169.3 & 227.8 & 85.9 & 11.0 & 2.
 LRU              & 100 & 0.074 & 0.049 & 40.2 & 102.4 & 174.0 & 47.0 & 18.8 & 2.2 \\
 FIFO             & 100 & 0.063 & 0.042 & 42.5 & 109.6 & 185.4 & 49.8 & 17.9 & 2.2 \\
 LFU              & 100 & 0.096 & 0.072 & 42.1 & 103.9 & 190.3 & 49.0 & 17.6 & 2.2 \\
-W-TinyLFU        & 100 & 0.086 & 0.069 & 74.6 & 145.7 & 202.9 & 79.7 & 11.4 & 2.3 \\
-W-TinyLFU+Cost   & 100 & 0.078 & 0.053 & 69.6 & 136.4 & 192.1 & 70.9 & 12.7 & 2.3 \\
+W-TinyLFU        & 100 & 0.078 & 0.053 & 69.6 & 136.4 & 192.1 & 70.9 & 12.7 & 2.3 \\
+W-TinyLFU+Cost   & 100 & 0.086 & 0.069 & 74.6 & 145.7 & 202.9 & 79.7 & 11.4 & 2.3 \\
 \midrule
 LRU              & 200 & 0.097 & 0.070 & 40.0 & 60.6  & 165.6 & 43.3 & 17.8 & 2.1 \\
 FIFO             & 200 & 0.080 & 0.053 & 39.2 & 63.2  & 155.5 & 42.6 & 18.8 & 2.1 \\
 LFU              & 200 & 0.116 & 0.085 & 38.6 & 59.1  & 154.9 & 41.7 & 18.5 & 2.1 \\
-W-TinyLFU        & 200 & 0.098 & 0.085 & 41.5 & 88.6  & 133.9 & 44.3 & 18.4 & 2.3 \\
-W-TinyLFU+Cost   & 200 & 0.100 & 0.077 & 30.4 & 64.5  & 99.4  & 33.3 & 23.2 & 2.4 \\
+W-TinyLFU        & 200 & 0.100 & 0.077 & 30.4 & 64.5  & 99.4  & 33.3 & 23.2 & 2.4 \\
+W-TinyLFU+Cost   & 200 & 0.098 & 0.085 & 41.5 & 88.6  & 133.9 & 44.3 & 18.4 & 2.3 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Complete metrics -- LMSYS-Chat-1M (threshold = 0.85, single representative trial).}
+\caption{Complete metrics -- LMSYS-Chat-1M (threshold = 0.85, mean across 3 trials).}
 \label{tab:full_lmsys085}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -859,6 +880,7 @@ Each benchmark run produces a JSON result file. Representative example:
 
 \noindent Per-request logs (\texttt{*\_log.json}) are also saved alongside each result file, containing individual query metrics used for CDF plots and time-series analysis.
 
+\newpage
 \section{How to Reproduce}
 
 \begin{lstlisting}
@@ -869,7 +891,9 @@ cd GPTCache && git checkout feature/wtinylfu-cost-aware
 docker build -t gptcache-bench . && docker run --rm gptcache-bench
 
 # Option 2: Local (recommended, ~5 min)
-python -m venv .venv && .venv\Scripts\activate
+python -m venv .venv
+# Linux/macOS: source .venv/bin/activate
+# Windows:     .venv\Scripts\activate
 pip install -e . && pip install -r requirements-bench.txt
 python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" \
     --ignore=tests/unit_tests/eviction/test_distributed_cache.py
