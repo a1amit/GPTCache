@@ -85,12 +85,12 @@ def _save(fig, output_dir, name):
     print(f"  Saved {name}.pdf + {name}.png")
 
 
-def _add_bar_labels(ax, bars, values, fmt=".3f", fontsize=7, offset=0.005):
-    """Add value labels above bars with automatic rotation when crowded."""
+def _add_bar_labels(ax, bars, values, fmt=".2f", fontsize=6, offset=0.005):
+    """Add value labels above bars."""
     for bar, val in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + offset,
                 f"{val:{fmt}}", ha="center", va="bottom", fontsize=fontsize,
-                fontweight="bold", rotation=45)
+                rotation=90)
 
 
 def plot_hit_rate_by_cache_size(results, output_dir: Path, threshold: float = 0.85):
@@ -124,7 +124,7 @@ def plot_hit_rate_by_cache_size(results, output_dir: Path, threshold: float = 0.
     ax.set_xticks(x)
     ax.set_xticklabels(cache_sizes)
     ax.legend(loc="upper left", frameon=True, fancybox=True, shadow=True)
-    ax.set_ylim(0, min(max(r["hit_rate"] for r in filtered) * 1.25, 1.05))
+    ax.set_ylim(0, min(max(r["hit_rate"] for r in filtered) * 1.35, 1.05))
 
     _save(fig, output_dir, "hit_rate_by_cache_size")
 
@@ -161,7 +161,7 @@ def plot_token_saving_by_cache_size(results, output_dir: Path, threshold: float 
     ax.set_xticks(x)
     ax.set_xticklabels(cache_sizes)
     ax.legend(loc="upper left", frameon=True, fancybox=True, shadow=True)
-    ax.set_ylim(0, min(max(r["token_saving_ratio"] for r in filtered) * 1.25, 1.05))
+    ax.set_ylim(0, min(max(r["token_saving_ratio"] for r in filtered) * 1.35, 1.05))
 
     _save(fig, output_dir, "token_saving_by_cache_size")
 
@@ -205,7 +205,7 @@ def plot_latency_comparison(results, output_dir: Path, threshold: float = 0.85):
     ax.set_ylabel("Latency (ms)")
     ax.set_title(f"Per-Request Latency Percentiles\n(cache size = {max_cs})")
     ax.legend(frameon=True, fancybox=True, shadow=True, loc="upper left")
-    ax.set_ylim(0, max(p99s) * 1.25)
+    ax.set_ylim(0, max(p99s) * 1.35)
 
     _save(fig, output_dir, "latency_comparison")
 
@@ -256,25 +256,24 @@ def plot_improvement_summary(results, output_dir: Path, threshold: float = 0.85)
                     y_pos = bar.get_height()
                     va = "bottom" if val >= 0 else "top"
                     ax.text(bar.get_x() + bar.get_width() / 2,
-                            y_pos + (1.5 if val >= 0 else -1.5),
-                            f"{val:+.1f}%", ha="center", va=va, fontsize=7,
-                            fontweight="bold", rotation=45)
+                            y_pos + (1.0 if val >= 0 else -1.0),
+                            f"{val:+.0f}%", ha="center", va=va, fontsize=6,
+                            rotation=90)
 
         ax.set_xlabel("Cache Size (entries)")
         ax.set_ylabel("Improvement vs LRU (%)")
-        ax.set_title(title, fontsize=12)
+        ax.set_title(title, fontsize=11)
         ax.set_xticks(x)
         ax.set_xticklabels(cache_sizes)
         ax.axhline(y=0, color="black", linewidth=0.8, linestyle="-")
 
-    # Single shared legend at the top
     legend_labels = [POLICY_LABELS.get(p, p) for p in policies]
     fig.legend(handles_for_legend, legend_labels, loc="upper center",
                ncol=len(policies), frameon=True, fancybox=True, shadow=True,
-               fontsize=10, bbox_to_anchor=(0.5, 1.0))
+               fontsize=9, bbox_to_anchor=(0.5, 0.98))
     fig.suptitle("Performance Improvement Over LRU Baseline",
-                 fontsize=15, fontweight="bold", y=1.06)
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+                 fontsize=14, fontweight="bold", y=1.02)
+    fig.tight_layout(rect=[0, 0, 1, 0.91])
     _save(fig, output_dir, "improvement_vs_lru")
 
 
@@ -404,7 +403,8 @@ def plot_hit_rate_over_time(results_dir: Path, output_dir: Path,
     ax.set_xlabel("Query Number")
     ax.set_ylabel(f"Hit Rate (sliding window = {window})")
     ax.set_title(f"Cache Hit Rate Over Time (cache size = {max_cs})")
-    ax.legend(frameon=True, fancybox=True, shadow=True, loc="upper right")
+    ax.legend(frameon=True, fancybox=True, shadow=True, loc="best",
+              fontsize=9)
     ax.set_ylim(0, None)
 
     _save(fig, output_dir, "hit_rate_over_time")
