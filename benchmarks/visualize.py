@@ -85,8 +85,11 @@ def _save(fig, output_dir, name):
     print(f"  Saved {name}.pdf + {name}.png")
 
 
-def _add_bar_labels(ax, bars, values, fmt=".2f", fontsize=7, offset=0.005):
-    """Add value labels above bars."""
+def _add_bar_labels(ax, bars, values, fmt=None, fontsize=7, offset=0.005):
+    """Add value labels above bars. Auto-selects decimal places based on value range."""
+    max_val = max(abs(v) for v in values) if values else 0
+    if fmt is None:
+        fmt = ".3f" if max_val < 0.2 else ".2f"
     for bar, val in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + offset,
                 f"{val:{fmt}}", ha="center", va="bottom", fontsize=fontsize)
