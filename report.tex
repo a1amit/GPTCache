@@ -139,6 +139,7 @@ Our W-TinyLFU implementation follows the paper's three-segment architecture, ill
 
 \begin{figure}[H]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
     >=Stealth,
     node distance=0.9cm and 1.2cm,
@@ -212,7 +213,8 @@ Our W-TinyLFU implementation follows the paper's three-segment architecture, ill
   \draw[arr, filtred, dashed]
     (gate.north) -- ++(0,0.6) node[above, lbl, text=filtred] {reject};
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}% end resizebox
 \caption{W-TinyLFU three-segment architecture.  New entries enter the window cache.
 When the window overflows, its LRU victim becomes a candidate for the main cache.
 If the main cache is full, the candidate competes against the probation segment's LRU victim via the TinyLFU admission filter.}
