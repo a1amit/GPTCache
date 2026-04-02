@@ -106,7 +106,8 @@ export HF_TOKEN="hf_your_token"
 # PowerShell
 $env:HF_TOKEN = "hf_your_token"
 
-python benchmarks/run_benchmarks.py --dataset lmsys --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_lmsys/ --workers -1 --repeats 3
+python benchmarks/run_benchmarks.py --dataset lmsys --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.80 --output results_lmsys_080/ --workers -1 --repeats 3
+python benchmarks/run_benchmarks.py --dataset lmsys --n_samples 3000 --cache_sizes "50,100,200" --policies "lru,fifo,lfu,wtinylfu,wtinylfu_nocost" --thresholds 0.85 --output results_lmsys_085/ --workers -1 --repeats 3
 ```
 
 **WildChat-1M:**
@@ -182,18 +183,15 @@ These can be passed via `extra_params` in the simulator or directly to the `WTin
 
 If you installed locally (Option B/C) and want to run just the unit tests without benchmarks:
 
-```bash
+```
 # Run all eviction policy unit tests (38 tests)
-python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" \
-    --ignore=tests/unit_tests/eviction/test_distributed_cache.py
+python -m pytest tests/unit_tests/eviction/ -v -o "addopts=" --ignore=tests/unit_tests/eviction/test_distributed_cache.py
 
 # Run only the W-TinyLFU tests (10 tests)
 python -m pytest tests/unit_tests/eviction/test_wtinylfu.py -v -o "addopts="
 
 # Run only the data structure tests (16 tests)
-python -m pytest tests/unit_tests/eviction/test_count_min_sketch.py \
-    tests/unit_tests/eviction/test_doorkeeper.py \
-    tests/unit_tests/eviction/test_segmented_lru.py -v -o "addopts="
+python -m pytest tests/unit_tests/eviction/test_count_min_sketch.py tests/unit_tests/eviction/test_doorkeeper.py tests/unit_tests/eviction/test_segmented_lru.py -v -o "addopts="
 ```
 
 Note: The `-o "addopts="` flag overrides GPTCache's `pytest.ini` which adds
