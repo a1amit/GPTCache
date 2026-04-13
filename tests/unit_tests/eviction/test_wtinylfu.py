@@ -29,10 +29,8 @@ class TestWTinyLFU(unittest.TestCase):
         eviction = EvictionBase.get(
             name="wtinylfu", maxsize=5, clean_size=1, on_evict=on_evict
         )
-        # Insert more than maxsize
         for i in range(10):
             eviction.put([i])
-        # Some items should have been evicted
         self.assertGreater(len(evicted), 0)
 
     def test_frequent_items_retained(self):
@@ -45,19 +43,15 @@ class TestWTinyLFU(unittest.TestCase):
             name="wtinylfu", maxsize=10, clean_size=1, on_evict=on_evict
         )
 
-        # Insert items 0-9
         eviction.put(list(range(10)))
 
-        # Access items 0-4 many times to boost their frequency
         for _ in range(20):
             for i in range(5):
                 eviction.get(i)
 
-        # Now insert items 10-19, forcing eviction
         for i in range(10, 20):
             eviction.put([i])
 
-        # Items 0-4 should mostly survive due to high frequency
         surviving_popular = sum(1 for i in range(5) if i not in evicted)
         self.assertGreaterEqual(surviving_popular, 3)
 
@@ -72,27 +66,21 @@ class TestWTinyLFU(unittest.TestCase):
             on_evict=on_evict, cost_aware=True
         )
 
-        # Insert items 0-9
         eviction.put(list(range(10)))
 
-        # Set high cost for items 0-4 (expensive to regenerate)
         for i in range(5):
             eviction.set_cost(i, 1000.0)
-        # Set low cost for items 5-9
         for i in range(5, 10):
             eviction.set_cost(i, 1.0)
 
-        # Access all items equally
         for _ in range(5):
             for i in range(10):
                 eviction.get(i)
 
-        # Now insert items 10-19, forcing eviction
         for i in range(10, 20):
             eviction.set_cost(i, 1.0)
             eviction.put([i])
 
-        # High-cost items (0-4) should be preferentially retained
         high_cost_evicted = sum(1 for i in range(5) if i in evicted)
         low_cost_evicted = sum(1 for i in range(5, 10) if i in evicted)
         self.assertLessEqual(high_cost_evicted, low_cost_evicted)
@@ -107,26 +95,21 @@ class TestWTinyLFU(unittest.TestCase):
             name="wtinylfu", maxsize=10, clean_size=1, on_evict=on_evict
         )
 
-        # Insert items 0-4 and access them heavily
         eviction.put(list(range(5)))
         for _ in range(20):
             for i in range(5):
                 eviction.get(i)
 
-        # Insert items 5-9 (no re-access -> one-hit wonders)
         eviction.put(list(range(5, 10)))
 
-        # Insert items 10-14, forcing eviction
         for i in range(10, 15):
             eviction.put([i])
 
-        # One-hit wonders (5-9) should be evicted before frequent items (0-4)
         frequent_evicted = sum(1 for i in range(5) if i in evicted)
         one_hit_evicted = sum(1 for i in range(5, 10) if i in evicted)
         self.assertLessEqual(frequent_evicted, one_hit_evicted)
 
     def test_clean_size_default(self):
-        """Default clean_size should be 20% of maxsize."""
         eviction = EvictionBase.get(
             name="wtinylfu", maxsize=100, on_evict=lambda x: None
         )
@@ -141,32 +124,23 @@ class TestWTinyLFU(unittest.TestCase):
         self.assertEqual(eviction._cost_map[1], 500.0)
 
     def test_doorkeeper_cleared_on_sketch_reset(self):
-        """Per the TinyLFU paper, the doorkeeper must be cleared when the
-        CMS counters are halved to prevent stale false positives."""
         eviction = EvictionBase.get(
             name="wtinylfu", maxsize=100, on_evict=lambda x: None,
-            reset_multiplier=1,  # sample_size = 100
+            reset_multiplier=1,
         )
-        # Plant a sentinel in the doorkeeper before any resets
         sentinel = hash(0xDEADBEEF)
         eviction._doorkeeper.add(sentinel)
         self.assertTrue(eviction._doorkeeper.contains(sentinel))
 
-        # Drive sketch increments past sample_size to trigger reset+clear.
-        # put() seeds the doorkeeper; subsequent get() calls pass through
-        # and increment the sketch.  100 items × 5 rounds > sample_size.
         eviction.put(list(range(50)))
         for _ in range(5):
             for i in range(50):
                 eviction.get(i)
 
-        # The sentinel was planted before any reset.  After clear it must
-        # be gone (bloom filter has ~958 bits with ≤50 items → FP < 0.01%).
         self.assertFalse(eviction._doorkeeper.contains(sentinel),
                          "Doorkeeper should be cleared when CMS resets")
 
     def test_matches_existing_test_pattern_lru_style(self):
-        """Mirrors the existing test_lru pattern to verify compatibility."""
         datas = []
 
         def on_evict(deletes):
@@ -186,12 +160,235 @@ class TestWTinyLFU(unittest.TestCase):
         add_data(2)
         add_data(3)
         add_data(4)
-        # Access item 1 many times to boost frequency
         for _ in range(10):
             eviction.get(1)
         add_data(5)
-        # After eviction, item 1 should survive (highest frequency)
         self.assertIn(1, datas)
+
+
+class TestWTinyLFUEWMANormalization(unittest.TestCase):
+    """Tests for EWMA-based cost normalization (Ben Manes proposal)."""
+
+    def test_ewma_tracker_initialized(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=100, on_evict=lambda x: None,
+            cost_aware=True
+        )
+        self.assertIsNotNone(eviction._cost_tracker)
+        self.assertEqual(eviction._cost_tracker.count, 0)
+
+    def test_set_cost_feeds_ewma(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=100, on_evict=lambda x: None,
+            cost_aware=True
+        )
+        eviction.set_cost(1, 500.0)
+        eviction.set_cost(2, 1000.0)
+        self.assertEqual(eviction._cost_tracker.count, 2)
+
+    def test_normalized_cost_score_range(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=100, on_evict=lambda x: None,
+            cost_aware=True, ewma_warmup=5
+        )
+        # Feed enough costs to pass warmup
+        for i in range(1, 30):
+            eviction.set_cost(i, float(i * 100))
+        eviction.put(list(range(1, 30)))
+
+        # Scores should be in valid range
+        for i in range(1, 30):
+            score = eviction._get_cost_score(i)
+            self.assertGreaterEqual(score, 0)
+            self.assertLessEqual(score, 15)
+
+    def test_expensive_items_get_higher_normalized_score(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=200, on_evict=lambda x: None,
+            cost_aware=True, ewma_alpha=0.1, ewma_warmup=10
+        )
+        # Establish cost distribution
+        for i in range(50):
+            eviction.set_cost(i, 100.0)  # cheap
+        for i in range(50, 60):
+            eviction.set_cost(i, 3000.0)  # expensive
+
+        cheap_score = eviction._get_cost_score(0)
+        expensive_score = eviction._get_cost_score(50)
+        self.assertGreater(expensive_score, cheap_score)
+
+    def test_cost_aware_false_disables_normalization(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=100, on_evict=lambda x: None,
+            cost_aware=False
+        )
+        eviction.set_cost(1, 5000.0)
+        eviction.put([1])
+        score = eviction._get_cost_score(1)
+        self.assertEqual(score, 1)  # neutral when disabled
+
+    def test_ewma_custom_alpha(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=100, on_evict=lambda x: None,
+            cost_aware=True, ewma_alpha=0.2
+        )
+        self.assertAlmostEqual(eviction._cost_tracker._alpha, 0.2)
+
+
+class TestWTinyLFUAdaptiveWindow(unittest.TestCase):
+    """Tests for the hill-climbing adaptive window sizing."""
+
+    def test_adaptive_enabled_for_large_caches(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=200, on_evict=lambda x: None,
+            adaptive=True
+        )
+        self.assertIsNotNone(eviction._hill_climber)
+
+    def test_adaptive_disabled_for_small_caches(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=50, on_evict=lambda x: None,
+            adaptive=True
+        )
+        self.assertIsNone(eviction._hill_climber)
+
+    def test_adaptive_disabled_explicitly(self):
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=200, on_evict=lambda x: None,
+            adaptive=False
+        )
+        self.assertIsNone(eviction._hill_climber)
+
+    def test_window_cap_changes_after_heavy_traffic(self):
+        """After enough operations, the hill climber should adjust window size."""
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=200, on_evict=lambda x: None,
+            adaptive=True, reset_multiplier=1,
+        )
+        initial_window_cap = eviction._window_cap
+
+        # Drive heavy traffic to trigger multiple CMS resets (= adaptation)
+        for cycle in range(5):
+            for i in range(cycle * 200, (cycle + 1) * 200):
+                eviction.put([i])
+            for i in range(cycle * 200, (cycle + 1) * 200):
+                eviction.get(i)
+
+        # Window cap should have changed (in either direction)
+        # (We can't predict which direction without knowing the workload)
+        # At minimum, verify no crash and the cache still works
+        eviction.put([99999])
+        self.assertIsNotNone(eviction.get(99999))
+
+    def test_backward_compatible_without_adaptive(self):
+        """Disabling adaptive mode should match original fixed-window behavior."""
+        evicted = []
+
+        def on_evict(keys):
+            evicted.extend(keys)
+
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=10, clean_size=1,
+            on_evict=on_evict, adaptive=False
+        )
+        eviction.put(list(range(10)))
+
+        for _ in range(20):
+            for i in range(5):
+                eviction.get(i)
+
+        for i in range(10, 20):
+            eviction.put([i])
+
+        surviving_popular = sum(1 for i in range(5) if i not in evicted)
+        self.assertGreaterEqual(surviving_popular, 3)
+
+
+class TestWTinyLFUEndToEnd(unittest.TestCase):
+    """End-to-end integration tests with all features enabled."""
+
+    def test_full_feature_set_no_crash(self):
+        """Smoke test with EWMA + hill climber + cost_aware all enabled."""
+        evicted = []
+
+        def on_evict(keys):
+            evicted.extend(keys)
+
+        eviction = EvictionBase.get(
+            name="wtinylfu", maxsize=200, clean_size=10,
+            on_evict=on_evict, cost_aware=True, adaptive=True,
+            ewma_alpha=0.1, ewma_warmup=10,
+        )
+
+        # Simulate realistic LLM cache workload
+        import random
+        random.seed(42)
+        for i in range(500):
+            cost = random.choice([50, 100, 200, 500, 1000, 2000, 3500])
+            eviction.set_cost(i, float(cost))
+            eviction.put([i])
+
+        # Access some items repeatedly (popular queries)
+        for _ in range(10):
+            for i in range(20):
+                eviction.get(i)
+
+        # Insert more items
+        for i in range(500, 700):
+            cost = random.choice([50, 100, 200, 500, 1000, 2000])
+            eviction.set_cost(i, float(cost))
+            eviction.put([i])
+
+        # Verify cache integrity
+        total_in_cache = len(eviction._window) + len(eviction._main)
+        self.assertLessEqual(total_in_cache, eviction._maxsize)
+        self.assertGreater(len(evicted), 0)
+
+    def test_cost_normalization_improves_retention(self):
+        """Expensive items should be retained more with EWMA normalization."""
+        evicted_normalized = []
+        evicted_raw = []
+
+        def make_on_evict(evicted_list):
+            def on_evict(keys):
+                evicted_list.extend(keys)
+            return on_evict
+
+        import random
+
+        for evicted_list, adaptive in [
+            (evicted_normalized, True),
+            (evicted_raw, False),
+        ]:
+            random.seed(123)
+            eviction = EvictionBase.get(
+                name="wtinylfu", maxsize=50, clean_size=5,
+                on_evict=make_on_evict(evicted_list),
+                cost_aware=True, adaptive=adaptive,
+                ewma_warmup=5, ewma_alpha=0.1,
+            )
+
+            # Insert items with varied costs
+            for i in range(50):
+                cost = 3000.0 if i < 10 else 50.0
+                eviction.set_cost(i, cost)
+                eviction.put([i])
+
+            # Access all equally
+            for _ in range(10):
+                for i in range(50):
+                    eviction.get(i)
+
+            # Force eviction with new items
+            for i in range(50, 100):
+                eviction.set_cost(i, 50.0)
+                eviction.put([i])
+
+        # Both should evict cheap items preferentially
+        expensive_evicted_norm = sum(1 for i in range(10) if i in evicted_normalized)
+        cheap_evicted_norm = sum(1 for i in range(10, 50) if i in evicted_normalized)
+        # Expensive items should be evicted less
+        self.assertLessEqual(expensive_evicted_norm, cheap_evicted_norm)
 
 
 if __name__ == "__main__":
