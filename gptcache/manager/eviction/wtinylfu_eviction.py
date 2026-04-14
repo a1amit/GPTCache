@@ -240,13 +240,20 @@ class WTinyLFUEviction(EvictionBaseABC):
     def _admit(self, candidate_key: Any, victim_key: Any) -> bool:
         """W-TinyLFU admission decision: should candidate replace victim?
 
-        Scoring uses frequency * normalized_cost_score.  Both terms are
-        on the 0-15 scale (CMS frequency, EWMA z-score cost), giving a
-        composite range of 0-225 with good discrimination.
+        Uses lexicographic scoring: frequency is the primary signal, cost
+        is a tiebreaker within the same frequency level.  This prevents
+        cost from overriding frequency on sparse workloads (e.g., LMSYS)
+        where most entries have freq 0-1 and cost would otherwise dominate.
+
+        value = freq * (num_cost_levels + 1) + cost_score
+
+        With 16 frequency levels (0-15) and 16 cost levels (0-15), a
+        higher frequency ALWAYS wins regardless of cost.  Cost only
+        differentiates entries at the same frequency.
 
         Follows Caffeine's admission policy:
         1. Candidate wins if its estimated value exceeds the victim's.
-        2. When cost-aware, value = frequency * cost_score (EWMA-normalized).
+        2. When cost-aware, value = freq * 16 + cost_score (lexicographic).
         3. At high candidate frequencies (>= 6), admit with ~1/128 probability
            as a hash-DoS defence (Caffeine's ADMIT_HASHDOS_THRESHOLD).
         4. Otherwise reject — favour cache stability at low frequencies.
@@ -257,8 +264,10 @@ class WTinyLFUEviction(EvictionBaseABC):
         if self._cost_aware:
             cost_c = self._get_cost_score(candidate_key)
             cost_v = self._get_cost_score(victim_key)
-            value_c = freq_c * cost_c
-            value_v = freq_v * cost_v
+            # Lexicographic: frequency dominates, cost breaks ties
+            step = self._cost_tracker._num_levels + 1  # 16
+            value_c = freq_c * step + cost_c
+            value_v = freq_v * step + cost_v
         else:
             value_c = freq_c
             value_v = freq_v
