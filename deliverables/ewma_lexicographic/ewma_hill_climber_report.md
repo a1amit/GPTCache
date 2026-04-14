@@ -175,7 +175,27 @@ All backward-compatible with defaults:
 | `ewma_alpha` | 0.05 | EWMA smoothing factor (~20-sample effective window) |
 | `ewma_warmup` | 20 | Observations before normalization activates |
 
-## 8. References
+## 8. Summary
+
+**Gains:**
+- Fixed a bug at cs=200 where `wtinylfu_nocost` was outperforming `wtinylfu` (cost-aware was hurting, now it helps: 0.98x -> 1.03x)
+- Improved cost-aware advantage on synthetic Zipfian workloads by +3-5% across all cache sizes
+- W-TinyLFU remains the top-performing policy on synthetic data at every cache size
+- EWMA normalization prevents raw cost magnitudes from dominating the frequency signal
+- Hill climber adapts window/main split without manual tuning
+
+**Neutral:**
+- On LMSYS-Chat-1M (real-world), cost-aware performs roughly the same as no-cost (ratios 0.90x-1.0x). This is expected: when cost and frequency are uncorrelated, cost-awareness has no signal to exploit. The lexicographic scoring ensures it doesn't hurt either.
+
+**Negatives:**
+- The originally proposed multiplicative scoring (`freq * cost_score`) regressed badly on LMSYS (-19% at cs=50). We had to switch to lexicographic scoring (`freq * 16 + cost_score`) to fix this, which trades some synthetic performance for robustness.
+- On LMSYS, LFU outperforms W-TinyLFU regardless of cost-awareness. This is a workload characteristic (sparse, low hit rates of 5-10%), not a regression from these changes.
+- The hill climber provides no measurable benefit on LMSYS at these hit rates -- the signal is too noisy for adaptation to help.
+- Cost-awareness in general remains workload-dependent, confirming Ben Manes' warning that this is "an immature research topic" where "papers often overfit to synthetic workloads."
+
+**Bottom line:** The changes are a net positive on workloads where cost correlates with popularity (the LLM caching use case this targets), fix a real bug, and don't regress on workloads where cost is uncorrelated. The biggest lesson is that frequency must remain the dominant signal -- cost should only break ties.
+
+## 9. References
 
 - Ben Manes, [Caffeine discussion #1744: Weight-based eviction](https://github.com/ben-manes/caffeine/discussions/1744)
 - Einziger, Eytan, Friedman, Manes. [Lightweight Robust Size Aware Cache Management](https://arxiv.org/abs/2105.08770). ACM TOS, 2022.
@@ -183,7 +203,7 @@ All backward-compatible with defaults:
 - Caffeine source: `BoundedLocalCache.determineAdjustment()` ([GitHub](https://github.com/ben-manes/caffeine))
 - Yiling-J, [Theine](https://github.com/Yiling-J/theine) (Python W-TinyLFU reference)
 
-## 9. Raw Data
+## 10. Raw Data
 
 Baseline results (raw cost multiplication): [`../baseline_raw_cost/`](../baseline_raw_cost/)
 EWMA + lexicographic results: [`./`](./) (this directory)
