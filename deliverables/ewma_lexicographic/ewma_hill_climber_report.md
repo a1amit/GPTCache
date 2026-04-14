@@ -185,5 +185,5 @@ All backward-compatible with defaults:
 
 ## 9. Raw Data
 
-Baseline results (raw cost multiplication): `deliverables/baseline_raw_cost/`
-EWMA + lexicographic results: `deliverables/ewma_lexicographic/`
+Baseline results (raw cost multiplication): [`../baseline_raw_cost/`](../baseline_raw_cost/)
+EWMA + lexicographic results: [`./`](./) (this directory)
