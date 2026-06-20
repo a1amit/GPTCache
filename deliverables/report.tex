@@ -123,6 +123,72 @@ ModelCache & Smaller community, less clean eviction abstraction \\
 \end{table}
 
 %----------------------------------------------------------------------
+\section{Community Reception}
+%----------------------------------------------------------------------
+
+The implementation was submitted as an open pull request to GPTCache---PR~\#680, available at \url{https://github.com/zilliztech/GPTCache/pull/680}---and, before being merged, attracted direct technical engagement from Ben Manes---author of Caffeine~\cite{caffeine}, the reference W-TinyLFU implementation, and a co-author of the TinyLFU paper on which this work builds~\cite{tinylfu}.
+We open with this exchange, reproduced in chronological order, as independent validation of the design; the technical details it refers to are developed in the sections that follow.
+
+\paragraph{(1)~Initial review --- Ben Manes, 13~April~2026.}
+He reviewed the cost-aware admission design, observing that it extends ideas he had previously sketched for Caffeine, linking his earlier write-up (Caffeine discussion \#1744) and a related line of latency-aware caching research (Figure~\ref{fig:recv-ben1}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures_community/01_ben_apr13.png}
+  \caption{Ben Manes' initial review on PR~\#680, describing the cost-aware admission policy as extending his own ideas.\\\footnotesize\url{https://github.com/zilliztech/GPTCache/pull/680\#issuecomment-4234477540}}
+  \label{fig:recv-ben1}
+\end{figure}
+
+\paragraph{(2)~Our acknowledgement --- 13~April~2026.}
+We thanked him and committed to studying and incorporating his suggestions (Figure~\ref{fig:recv-amit1}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures_community/02_amit_apr13.png}
+  \caption{Our reply acknowledging the feedback.\\\footnotesize\url{https://github.com/zilliztech/GPTCache/pull/680\#issuecomment-4237708918}}
+  \label{fig:recv-amit1}
+\end{figure}
+
+\paragraph{(3)~Our follow-up with results --- 14~April~2026.}
+We implemented his proposed EWMA / z-score cost normalization together with Caffeine's hill-climber, and reported a key finding: the multiplicative scoring he suggested regressed on the uncorrelated LMSYS workload, whereas a lexicographic scoring (frequency dominant, cost as tie-breaker) preserved the gains.
+This comment---with the implementation summary and results table shown in Figure~\ref{fig:recv-amit2}---is the substance to which his next reply responds.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{figures_community/03_amit_apr14.png}
+  \caption{Our follow-up reporting the EWMA/hill-climber implementation, the multiplicative-vs-lexicographic finding, and benchmark results.\\\footnotesize\url{https://github.com/zilliztech/GPTCache/pull/680\#issuecomment-4243285674}}
+  \label{fig:recv-amit2}
+\end{figure}
+
+\paragraph{Going the extra mile.}
+Rather than tweaking the submitted PR in place, we built out his proposals on a separate, dedicated branch (\texttt{feature/ewma-hill-climber}) with an entirely new benchmark suite written specifically to evaluate his ideas: EWMA log-cost normalization with z-score mapping, a Caffeine-faithful adaptive hill climber, and a head-to-head comparison of multiplicative versus lexicographic scoring---run across both synthetic Zipfian and real LMSYS-Chat-1M workloads over three trials each.
+This is where we discovered that the multiplicative scoring Ben proposed caused a ${\sim}19\%$ regression on the uncorrelated LMSYS workload, and that a lexicographic scheme (frequency dominant, cost as tie-breaker) removed it while preserving the synthetic gains.
+The complete methodology and results are documented in \href{https://github.com/a1amit/GPTCache/blob/feature/ewma-hill-climber/deliverables/ewma_lexicographic/ewma_hill_climber_report.md}{a standalone evaluation report} on that branch.\footnote{\url{https://github.com/a1amit/GPTCache/blob/feature/ewma-hill-climber/deliverables/ewma_lexicographic/ewma_hill_climber_report.md}}
+
+\paragraph{(4)~His response --- Ben Manes, 14~April~2026.}
+Replying to the results above, he called the work ``\emph{very insightful}'' and suggested a further evaluation avenue, Nadav Keren's pipeline-cache simulator (Figure~\ref{fig:recv-ben2}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures_community/04_ben_apr14.png}
+  \caption{His response to our follow-up.\\\footnotesize\url{https://github.com/zilliztech/GPTCache/pull/680\#issuecomment-4244649668}}
+  \label{fig:recv-ben2}
+\end{figure}
+
+\paragraph{(5)~Cross-library reference --- 11~June~2026.}
+The engagement extended beyond this repository.
+Two months later, while advising a contributor proposing a cost-aware LFU policy for Moka (the Rust counterpart to Caffeine), Manes linked back to the PR~\#680 discussion as a reference point on the trade-offs of cost-aware admission; the hyperlinked word ``Sometimes'' in his comment points to this pull request (Figure~\ref{fig:recv-moka}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures_community/05_ben_moka.png}
+  \caption{Manes referencing the PR~\#680 discussion in an unrelated caching library, Moka PR~\#595; the linked word ``Sometimes'' points to PR~\#680.\\\footnotesize\url{https://github.com/moka-rs/moka/pull/595\#issuecomment-4683255145}}
+  \label{fig:recv-moka}
+\end{figure}
+
+This unsolicited feedback from the author of the reference implementation directly informed our cost-normalization design, and its later reuse in a separate caching project offers encouraging external validation of the work's relevance.
+
+%----------------------------------------------------------------------
 \section{Extension Design}
 %----------------------------------------------------------------------
 
@@ -692,6 +758,7 @@ GitHub Actions CI runs on manual trigger.
 
 %----------------------------------------------------------------------
 \section{Conclusion \& Future Work}
+\label{sec:conclusion}
 %----------------------------------------------------------------------
 
 We extended W-TinyLFU with token-cost-aware admission for LLM semantic caching, where response regeneration costs vary by orders of magnitude.
